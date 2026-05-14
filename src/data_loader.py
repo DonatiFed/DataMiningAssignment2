@@ -3,8 +3,18 @@ import numpy as np
 from src.config import TRAIN_FILE, TEST_FILE, NON_FEATURE_COLS, ID_COLS
 
 
+def _downcast(df):
+    """Downcast numeric types to reduce memory footprint."""
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="integer")
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = df[col].astype(np.float32)
+    return df
+
+
 def load_train(sample_frac=None, random_state=42):
     df = pd.read_csv(TRAIN_FILE, na_values="NULL")
+    df = _downcast(df)
     if sample_frac is not None and sample_frac < 1.0:
         srch_ids = df["srch_id"].unique()
         rng = np.random.RandomState(random_state)
@@ -14,7 +24,9 @@ def load_train(sample_frac=None, random_state=42):
 
 
 def load_test():
-    return pd.read_csv(TEST_FILE, na_values="NULL")
+    df = pd.read_csv(TEST_FILE, na_values="NULL")
+    df = _downcast(df)
+    return df
 
 
 def make_target(df):
