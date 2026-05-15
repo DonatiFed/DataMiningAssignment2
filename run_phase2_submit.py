@@ -36,7 +36,7 @@ from src.artifacts import (
 )
 
 
-RUN_ID = "phase2_best_submit"
+RUN_ID = "v4.2_submit"
 EXTERNAL_COPY_ROOT = Path("/home/ubuntu/experiment_artifacts")
 
 ANCHOR_SEED = 456

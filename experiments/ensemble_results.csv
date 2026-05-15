@@ -1,2 +1,0 @@
-ensemble_id,exp_id,date,member_ids,n_members,weighting,agg_method,local_ndcg5,kaggle_ndcg5,notes
-v4_ens_top8,V4_ENSEMBLE,2026-05-14,"lambdarank_base|lambdarank_click3|lambdarank_bal15|lambdarank_book50|lambdarank_noipw|lambdarank_randup|rank_xendcg|booking_clf",8,ndcg_proportional,rank_avg,0.42512,0.42021,V4 production ensemble. Member-level local scores not yet logged.

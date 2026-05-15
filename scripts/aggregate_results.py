@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-EXP_DIR = ROOT / "experiments"
+EXP_DIR = ROOT / "experiment_logs"
 ART_ROOT = ROOT / "artifacts"
 
 V4_LOCAL = 0.42512  # V4 ensemble local NDCG@5 (baseline reference)

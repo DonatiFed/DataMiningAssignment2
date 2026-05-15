@@ -8,6 +8,8 @@ __pycache__/
 .DS_Store
 .venv/
 
-# Track artifact metadata (json/csv/txt) but not binary predictions / parquet.
+# Track artifact metadata (json/csv/txt) but not binary predictions, parquet,
+# or submission CSVs (too large; the canonical copy lives in submissions/).
 artifacts/**/*.npy
 artifacts/**/*.parquet
+artifacts/**/submission*.csv
