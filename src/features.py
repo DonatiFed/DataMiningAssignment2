@@ -38,7 +38,6 @@ def price_features(df):
     df["price_per_room"] = df["price_usd"] / rooms
 
     df["log_price"] = np.log1p(df["price_usd"])
-
     df["log_distance"] = np.log1p(df["orig_destination_distance"])
 
     return df
@@ -129,44 +128,129 @@ def listwise_features(df):
     df["query_star_mean"] = g["prop_starrating"].transform("mean")
     df["query_price_mean"] = g["price_usd"].transform("mean")
 
+    # Within-query log-price z-score (price is skewed, log helps)
+    log_price = np.log1p(df["price_usd"])
+    log_mean = df.groupby("srch_id")["log_price"].transform("mean")
+    log_std = df.groupby("srch_id")["log_price"].transform("std").replace(0, 1)
+    df["log_price_z_score"] = (log_price - log_mean) / log_std
+
     return df
 
 
-def hotel_aggregates_safe(train_df, target_df, is_train=True):
-    """Smoothed aggregate features with Bayesian prior to reduce leakage."""
-    global_click = train_df["click_bool"].mean()
-    global_book = train_df["booking_bool"].mean()
-    PRIOR_WEIGHT = 50
+def kfold_target_encode(df, group_col, target_col, prefix, n_folds=5, seed=42, prior_weight=30):
+    """K-fold target encoding to avoid leakage within training data.
+    Each row's encoded value is computed from folds that don't contain that row.
+    """
+    global_mean = df[target_col].mean()
+    result = pd.Series(np.nan, index=df.index, dtype=np.float64)
 
-    def smoothed_rate(group_col, target_col, global_mean, prefix, source, target):
-        stats = source.groupby(group_col).agg(
-            _count=(target_col, "count"),
-            _sum=(target_col, "sum"),
-        ).reset_index()
-        stats[f"{prefix}_rate"] = (
-            (stats["_sum"] + PRIOR_WEIGHT * global_mean) /
-            (stats["_count"] + PRIOR_WEIGHT)
-        )
-        stats[f"{prefix}_count"] = stats["_count"]
-        stats = stats[[group_col, f"{prefix}_rate", f"{prefix}_count"]]
-        return target.merge(stats, on=group_col, how="left")
+    rng = np.random.RandomState(seed)
+    fold_ids = rng.randint(0, n_folds, size=len(df))
 
-    target_df = smoothed_rate("prop_id", "click_bool", global_click, "prop_click", train_df, target_df)
-    target_df = smoothed_rate("prop_id", "booking_bool", global_book, "prop_book", train_df, target_df)
-    target_df = smoothed_rate("srch_destination_id", "click_bool", global_click, "dest_click", train_df, target_df)
-    target_df = smoothed_rate("srch_destination_id", "booking_bool", global_book, "dest_book", train_df, target_df)
-    target_df = smoothed_rate("prop_country_id", "booking_bool", global_book, "country_book", train_df, target_df)
+    for fold in range(n_folds):
+        mask = fold_ids == fold
+        oof = df[~mask]
+        stats = oof.groupby(group_col)[target_col].agg(["sum", "count"])
+        stats["encoded"] = (stats["sum"] + prior_weight * global_mean) / (stats["count"] + prior_weight)
+        mapping = stats["encoded"]
+        result.loc[mask] = df.loc[mask, group_col].map(mapping).values
 
+    result.fillna(global_mean, inplace=True)
+    return result.astype(np.float32)
+
+
+def target_encode_from_source(source_df, target_df, group_col, target_col, prefix, prior_weight=30):
+    """Target encoding using a separate source (for val/test — no leakage)."""
+    global_mean = source_df[target_col].mean()
+    stats = source_df.groupby(group_col)[target_col].agg(["sum", "count"])
+    stats["encoded"] = (stats["sum"] + prior_weight * global_mean) / (stats["count"] + prior_weight)
+    mapping = stats["encoded"]
+    result = target_df[group_col].map(mapping).fillna(global_mean)
+    return result.astype(np.float32)
+
+
+def hotel_aggregates(train_df, target_df, is_train=True):
+    """Target-encoded aggregate features.
+    For training: k-fold encoding to prevent leakage.
+    For val/test: encode from full train source.
+    """
+    encode_specs = [
+        ("prop_id", "click_bool", "prop_click"),
+        ("prop_id", "booking_bool", "prop_book"),
+        ("srch_destination_id", "click_bool", "dest_click"),
+        ("srch_destination_id", "booking_bool", "dest_book"),
+        ("prop_country_id", "booking_bool", "country_book"),
+    ]
+
+    if is_train:
+        for group_col, target_col, prefix in encode_specs:
+            target_df[f"{prefix}_rate"] = kfold_target_encode(
+                target_df, group_col, target_col, prefix
+            )
+    else:
+        for group_col, target_col, prefix in encode_specs:
+            target_df[f"{prefix}_rate"] = target_encode_from_source(
+                train_df, target_df, group_col, target_col, prefix
+            )
+
+    # Property count (not target-dependent, no leakage)
+    prop_count = train_df.groupby("prop_id").size().reset_index(name="prop_count")
+    target_df = target_df.merge(prop_count, on="prop_id", how="left")
+    target_df["prop_count"] = target_df["prop_count"].fillna(0).astype(np.int32)
+
+    # Property avg price and price deviation
     prop_price = train_df.groupby("prop_id")["price_usd"].agg(["mean", "std"]).reset_index()
     prop_price.columns = ["prop_id", "prop_mean_price", "prop_std_price"]
     target_df = target_df.merge(prop_price, on="prop_id", how="left")
     target_df["price_vs_prop_mean"] = target_df["price_usd"] - target_df["prop_mean_price"]
+    target_df["prop_price_zscore"] = (
+        (target_df["price_usd"] - target_df["prop_mean_price"]) /
+        target_df["prop_std_price"].replace(0, np.nan)
+    )
+
+    # Property average star/review/location (not target-dependent)
+    prop_quality = train_df.groupby("prop_id").agg(
+        prop_avg_position=("position", "mean") if "position" in train_df.columns else ("prop_starrating", "first"),
+    ).reset_index()
+
+    # Destination average price (context for "is this destination expensive?")
+    dest_price = train_df.groupby("srch_destination_id")["price_usd"].mean().reset_index()
+    dest_price.columns = ["srch_destination_id", "dest_mean_price"]
+    target_df = target_df.merge(dest_price, on="srch_destination_id", how="left")
+    target_df["price_vs_dest_mean"] = target_df["price_usd"] - target_df["dest_mean_price"]
 
     return target_df
 
 
+def compute_position_propensity(train_df):
+    """Compute click propensity per position from random_bool=1 data."""
+    rand = train_df[train_df["random_bool"] == 1]
+    propensity = rand.groupby("position")["click_bool"].mean()
+    return propensity
+
+
+def compute_sample_weights(train_df, propensity):
+    """Inverse propensity weights: upweight clicks from low positions."""
+    max_prop = propensity.max()
+    weights = np.ones(len(train_df), dtype=np.float32)
+
+    if "position" in train_df.columns:
+        def _ipw(p):
+            prop_val = propensity.get(p, 0)
+            if prop_val <= 0:
+                return 1.0
+            return max_prop / prop_val
+        pos_weight = train_df["position"].map(_ipw)
+        # Only apply IPW to non-random data (random data is already unbiased)
+        is_nonrandom = train_df["random_bool"] == 0
+        weights = np.where(is_nonrandom, pos_weight, 1.0).astype(np.float32)
+        # Cap extreme weights
+        weights = np.clip(weights, 0.1, 10.0)
+
+    return weights
+
+
 def drop_raw_comp_columns(df):
-    """Drop individual comp1-8 columns after aggregation to save memory."""
     drop = []
     for i in range(1, 9):
         for suffix in ["_rate", "_inv", "_rate_percent_diff"]:
@@ -178,7 +262,6 @@ def drop_raw_comp_columns(df):
 
 
 def downcast_floats(df):
-    """Downcast float64 to float32 to halve memory."""
     float_cols = df.select_dtypes(include=["float64"]).columns
     df[float_cols] = df[float_cols].astype(np.float32)
     return df
@@ -196,5 +279,5 @@ def build_features(df, agg_source=None, is_train=True):
     df = downcast_floats(df)
     df = listwise_features(df)
     if agg_source is not None:
-        df = hotel_aggregates_safe(agg_source, df, is_train=is_train)
+        df = hotel_aggregates(agg_source, df, is_train=is_train)
     return df
