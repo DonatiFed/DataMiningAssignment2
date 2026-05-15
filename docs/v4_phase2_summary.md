@@ -134,20 +134,26 @@ Launched 2026-05-15 ~22:21 with the V4-style pattern. All 6 configs use seed=456
 
 ```
 DataMiningAssignment2/
-├── run_v4.py                       # 8-model V4 ensemble pipeline (production reference)
-├── run_baseline.py                 # V3 single-model baseline (historical)
-├── run_phase2.py                   # corrected label-gain sweep
-├── run_phase2_anchor_check.py      # single-config diagnostic (V4-style pattern verification)
-├── run_phase2_submit.py            # v4.2 submission generator
+├── README.md                       # top-level overview + how to run
+├── pipelines/                      # executable training scripts (invoke via `python -m`)
+│   ├── v4_ensemble.py              # 8-model V4 ensemble pipeline (production reference)
+│   ├── v3_baseline.py              # V3 single-model baseline (historical)
+│   ├── phase2_labelgain.py         # corrected label-gain sweep
+│   ├── phase2_anchor_check.py      # single-config diagnostic (V4-style pattern verification)
+│   ├── phase2_submit.py            # v4.2 submission generator
+│   └── phase3_weighting.py         # weighting sweep (scaffolded, not yet run)
 ├── scripts/aggregate_results.py    # promote per-run artifact rows → experiment_logs/
 ├── src/                            # data_loader, features, evaluate, submission, artifacts, config
 ├── notebooks/01..04                # EDA + diagnostics
+├── docs/
+│   ├── v4_phase2_summary.md        # this file
+│   ├── next_steps.md               # operational plan (Phase 3 → 7)
+│   └── archive/                    # SNAPSHOT.md, EDA_PLAN.md (historical)
 ├── experiment_logs/
 │   ├── experiment_tracker.csv      # one row per exp (V4_*, P2_*, P2_INVALID_*, V4.2_SUBMIT)
 │   ├── model_results.csv           # one row per single model
 │   ├── ensemble_results.csv        # one row per ensemble
-│   ├── feature_audit.csv           # 143 rows: gain, split, risk labels, decision
-│   └── v4_phase2_summary.md        # this file
+│   └── feature_audit.csv           # 143 rows: gain, split, risk labels, decision
 ├── artifacts/
 │   ├── phase2_labelgain/           # 6 corrected Phase 2 models (metadata; .npy gitignored)
 │   ├── phase2_anchor_check/        # 1 verification model

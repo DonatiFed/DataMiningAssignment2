@@ -2,11 +2,11 @@
 
 _Last updated: 2026-05-15_
 
-Read `experiment_logs/v4_phase2_summary.md` first for full context. This file is the operational plan.
+Read `docs/v4_phase2_summary.md` first for full context. This file is the operational plan.
 
 **Hard rule (carried from Phase 2 lesson):** every new pipeline must use the V4-style `lgb.Dataset` pattern — fresh `lgb.Dataset(...)` inside each config loop, no explicit `.construct()`, no `free_raw_data` flag, `del ds_train, ds_val, model; gc.collect()` after each iter. Otherwise the binning seed reverts to default `data_random_seed=1` and results drift ~−0.0024 NDCG@5. See summary §4.
 
-**Anchor invariant:** any new run that includes `label_gain="0,1,15"` with `seed=456` on the full V4 feature set should produce val NDCG@5 ≈ **0.42191**. If it doesn't, stop and diagnose before drawing conclusions (cf. `run_phase2_anchor_check.py`).
+**Anchor invariant:** any new run that includes `label_gain="0,1,15"` with `seed=456` on the full V4 feature set should produce val NDCG@5 ≈ **0.42191**. If it doesn't, stop and diagnose before drawing conclusions (cf. `pipelines/phase2_anchor_check.py`).
 
 **Selection metric reminder:** the local→Kaggle gap matters more than peak local val NDCG@5. V4 ensemble's gap is −0.00491; Phase 2 single's gap was −0.00619. Anything that *closes the gap* — better generalization, less overfit on val — is a real win, even if local NDCG@5 only moves a little.
 
@@ -14,7 +14,7 @@ Read `experiment_logs/v4_phase2_summary.md` first for full context. This file is
 
 ## Phase 3 — Weighting / IPW sweep (RUN FIRST)
 
-**Script:** `run_phase3_weighting.py` (already scaffolded, **not yet run**)
+**Script:** `pipelines/phase3_weighting.py` (already scaffolded, **not yet run**)
 
 **Configs (14 total):** 7 weighting variants × 2 label_gains.
 
@@ -30,9 +30,9 @@ Read `experiment_logs/v4_phase2_summary.md` first for full context. This file is
 
 Label gains: `0,2,15` (Phase 2 winner) and `0,1,15` (V4 bal15 anchor).
 
-**Run:**
+**Run (from project root):**
 ```
-uv run --no-sync python run_phase3_weighting.py 2>&1 | tee logs/phase3_$(date +%Y%m%d_%H%M%S).log
+uv run --no-sync python -m pipelines.phase3_weighting 2>&1 | tee logs/phase3_$(date +%Y%m%d_%H%M%S).log
 ```
 Expected wall-clock: ~3–4 min × 14 = ~45–60 min.
 
@@ -52,7 +52,7 @@ uv run --no-sync python scripts/aggregate_results.py \
 
 ## Phase 4 — Feature pruning
 
-**Script:** _not yet written_. Will be `run_phase4_features.py`.
+**Script:** _not yet written_. Will be `pipelines/phase4_features.py`.
 
 **Inputs from this session:**
 - `experiment_logs/feature_audit.csv` (143 features, with `decision` column).
@@ -85,7 +85,7 @@ Use the winning weighting + label_gain from Phase 3. 1 run per ablation = 4 sing
 
 ## Phase 5 — Target encoding variants
 
-**Script:** _not yet written_. Will be `run_phase5_te.py`.
+**Script:** _not yet written_. Will be `pipelines/phase5_te.py`.
 
 **Goal:** reduce the local→Kaggle gap on cross-key TEs without losing the gain (~1.1M combined across the 5 cross-TEs).
 
@@ -124,7 +124,7 @@ Use the winning weighting + features from P4.
 
 ## Phase 7 — Ensemble rebuild
 
-**Script:** new — call it `run_v5_ensemble.py` (don't confuse with the deleted `run_v5.py`).
+**Script:** new — call it `pipelines/v5_ensemble.py` (don't confuse with the deleted old `run_v5.py`).
 
 **Plan:**
 - Start from the V4 ensemble template (8 members).
@@ -142,12 +142,14 @@ Use the winning weighting + features from P4.
 ## Order of operations (1-line summary)
 
 ```
-Phase 3  (run_phase3_weighting.py) — done in 1 hour, aggregate, pick winner
-Phase 4  (run_phase4_features.py)  — write + run, ~30 min, pick winner
-Phase 5  (run_phase5_te.py)        — write + run, ~1 hour, pick winner
-Phase 6  (notebook 04 on P5 best)  — analysis day, no training, write findings
-Phase 7  (run_v5_ensemble.py)      — final ensemble + Kaggle submission
+Phase 3  (pipelines/phase3_weighting.py) — done in 1 hour, aggregate, pick winner
+Phase 4  (pipelines/phase4_features.py)  — write + run, ~30 min, pick winner
+Phase 5  (pipelines/phase5_te.py)        — write + run, ~1 hour, pick winner
+Phase 6  (notebooks/04_model_diagnostics.ipynb on P5 best) — analysis, no training
+Phase 7  (pipelines/v5_ensemble.py)      — final ensemble + Kaggle submission
 ```
+
+Invocation pattern is always `python -m pipelines.<name>` from the project root.
 
 ## Things explicitly NOT to do (carried from constraints)
 
