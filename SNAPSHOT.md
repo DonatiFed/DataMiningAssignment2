@@ -129,11 +129,10 @@ The diagnostics framework is built but is run interactively on the V3 model. Not
 
 | Version | Local NDCG@5 | Kaggle Public | Description |
 |---|---|---|---|
-| **V1** | 0.468 | 0.38 | Basic features + leaky aggregates (same-row target stats). Big overfit gap. |
-| **V2** | — | — | Iteration (see git history). |
-| **V3** (`run_baseline.py`) | 0.412–0.417 | — | K-fold OOF target encoding + IPW + tuned single LambdaRank. **The honest single-model baseline.** |
+| **V1** | 0.468 | 0.38208 | Basic features + leaky aggregates (same-row target stats). Big overfit gap. |
+| **V2** | — | 0.39149 | Iteration (see git history). |
+| **V3** (`run_baseline.py`) | 0.412–0.417 | 0.41392 | K-fold OOF target encoding + IPW + tuned single LambdaRank. **The honest single-model baseline.** |
 | **V4** (`run_v4.py`) | (cached in `models/v4/`) | **0.42021** | V3 features + 8-model diverse ensemble + rank-blended scoring. **Current best.** |
-| **V5** (`run_v5.py`) | — | not yet submitted | V4 features + extended label_gain grid + DART. Probably marginal gain over V4 since no new features. |
 
 ### V4 ensemble configurations (`run_v4.py:289`)
 
