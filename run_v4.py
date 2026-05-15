@@ -11,6 +11,8 @@ Each stage saves to models/v4/. Resumable: skips completed stages.
 import gc
 import json
 import time
+from datetime import datetime, timezone
+
 import numpy as np
 import lightgbm as lgb
 from pathlib import Path
@@ -23,10 +25,15 @@ from src.features import (
 )
 from src.evaluate import evaluate_ndcg
 from src.submission import generate_submission
+from src.artifacts import (
+    save_run_config, save_git_commit, save_feature_cols, save_val_meta,
+    save_model_artifacts, save_ensemble_artifacts,
+)
 
 ARTIFACT_DIR = Path("models/v4")
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
+V4_RUN_ID = "v4_stage3"
 V3_BASELINE_NDCG = 0.412
 
 
@@ -332,6 +339,21 @@ def stage3_ensemble():
     assert_no_forbidden(feature_cols)
     log(f"  {len(feature_cols)} features | {time.time()-t1:.0f}s")
 
+    run_cfg = {
+        "phase": "P0_v4_ensemble",
+        "run_id": V4_RUN_ID,
+        "date": datetime.now(timezone.utc).isoformat(),
+        "val_frac": 0.1,
+        "num_boost_round": 2000,
+        "early_stopping": 80,
+        "base_params": BASE_PARAMS,
+        "ensemble_configs": ENSEMBLE_CONFIGS,
+    }
+    save_run_config(V4_RUN_ID, run_cfg)
+    save_git_commit(V4_RUN_ID)
+    save_feature_cols(V4_RUN_ID, feature_cols)
+    save_val_meta(V4_RUN_ID, val_feat)
+
     assert_sorted(train_feat)
     train_groups = make_group_counts(train_feat)
     val_groups = make_group_counts(val_feat)
@@ -407,6 +429,8 @@ def stage3_ensemble():
         metrics = evaluate_full(val_feat)
         print_metrics(metrics, prefix=f"    ")
 
+        save_model_artifacts(V4_RUN_ID, cname, model, pred, feature_cols, metrics, params)
+
         info = {**metrics, "name": cname, "best_iter": model.best_iteration,
                 "params": {k: str(v) for k, v in params.items()}}
         models_info.append(info)
@@ -447,6 +471,11 @@ def stage3_ensemble():
     rank_metrics = evaluate_full(val_feat)
     print_metrics(rank_metrics, prefix="  >>> RANK ENSEMBLE: ")
 
+    save_ensemble_artifacts(
+        V4_RUN_ID, "v4_rank", list(ensemble_models.keys()),
+        model_weights, rank_scores, rank_metrics, agg_method="rank_avg_ndcg_weighted",
+    )
+
     # Simple avg for comparison
     simple_avg = np.zeros(n_val)
     for preds in ensemble_models.values():
@@ -455,6 +484,11 @@ def stage3_ensemble():
     val_feat["pred_score"] = simple_avg
     simple_metrics = evaluate_full(val_feat)
     print_metrics(simple_metrics, prefix="  >>> SIMPLE AVG:    ")
+
+    save_ensemble_artifacts(
+        V4_RUN_ID, "v4_simple", list(ensemble_models.keys()),
+        None, simple_avg, simple_metrics, agg_method="simple_mean",
+    )
 
     best_method = "rank" if rank_metrics["ndcg5"] >= simple_metrics["ndcg5"] else "simple"
     best_metrics = rank_metrics if best_method == "rank" else simple_metrics

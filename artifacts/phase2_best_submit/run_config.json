@@ -1,0 +1,35 @@
+{
+  "phase": "P2_best_submit",
+  "run_id": "phase2_best_submit",
+  "date": "2026-05-15T22:49:24.869630+00:00",
+  "selected_config": {
+    "name": "lg_0_2_15",
+    "label_gain": "0,2,15",
+    "val_ndcg5": 0.4225849286075321,
+    "val_recall5": 0.6411996497373029,
+    "best_iter_from_val": 470
+  },
+  "seed": 456,
+  "base_params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": [
+      5
+    ],
+    "boosting_type": "gbdt",
+    "learning_rate": 0.03,
+    "num_leaves": 400,
+    "max_depth": -1,
+    "min_child_samples": 50,
+    "subsample": 0.7,
+    "colsample_bytree": 0.6,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "min_split_gain": 0.0,
+    "verbose": -1,
+    "n_jobs": -1,
+    "seed": 456
+  },
+  "anchor_ref": "V4_BEST_SINGLE (lambdarank_bal15, val NDCG@5=0.42191)",
+  "notes": "V4 single-model config retrained on full train. Label_gain auto-picked from Phase 2."
+}
