@@ -16,6 +16,7 @@ ID_COLS = ["srch_id", "prop_id"]
 NON_FEATURE_COLS = [
     "srch_id", "prop_id", "date_time",
     "position", "click_bool", "booking_bool", "gross_bookings_usd",
+    "random_bool", "relevance",
 ]
 
 RANDOM_SEED = 42

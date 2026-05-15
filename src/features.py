@@ -128,24 +128,109 @@ def listwise_features(df):
     df["query_star_mean"] = g["prop_starrating"].transform("mean")
     df["query_price_mean"] = g["price_usd"].transform("mean")
 
-    # Within-query log-price z-score (price is skewed, log helps)
     log_price = np.log1p(df["price_usd"])
     log_mean = df.groupby("srch_id")["log_price"].transform("mean")
     log_std = df.groupby("srch_id")["log_price"].transform("std").replace(0, 1)
     df["log_price_z_score"] = (log_price - log_mean) / log_std
 
+    # --- V4: Enhanced within-query features ---
+    query_min = g["price_usd"].transform("min").replace(0, 1)
+    df["price_to_min_ratio"] = df["price_usd"] / query_min
+
+    df["is_cheapest"] = (df["price_rank"] == 1).astype(np.int8)
+    df["is_most_expensive"] = (df["price_usd"] == g["price_usd"].transform("max")).astype(np.int8)
+    df["is_best_star"] = (df["prop_starrating"] == g["prop_starrating"].transform("max")).astype(np.int8)
+    df["is_best_review"] = (df["prop_review_score"] == g["prop_review_score"].transform("max")).astype(np.int8)
+    df["is_best_location1"] = (df["prop_location_score1"] == g["prop_location_score1"].transform("max")).astype(np.int8)
+
+    df["price_percentile"] = g["price_usd"].rank(pct=True)
+    df["star_percentile"] = g["prop_starrating"].rank(pct=True, ascending=True)
+    df["review_percentile"] = g["prop_review_score"].rank(pct=True, ascending=True)
+
+    df["quality_rank_avg"] = (df["starrating_rank_norm"] + df["review_rank_norm"] + df["location1_rank_norm"]) / 3
+    df["value_gap"] = df["quality_rank_avg"] - df["price_rank_norm"]
+
+    if "location_total" in df.columns:
+        df["location_total_rank"] = g["location_total"].rank(method="min", ascending=False)
+        df["location_total_rank_norm"] = df["location_total_rank"] / group_size
+
+    # V5: value_score and price_per_star within-query ranks
+    if "value_score" in df.columns:
+        df["value_score_rank"] = g["value_score"].rank(method="min", ascending=False)
+        df["value_score_rank_norm"] = df["value_score_rank"] / group_size
+
+    if "price_per_star" in df.columns:
+        df["price_per_star_rank"] = g["price_per_star"].rank(method="min", ascending=True)
+        df["price_per_star_rank_norm"] = df["price_per_star_rank"] / group_size
+
+    # V5: Count of quality "wins" this hotel has within query
+    df["n_best_flags"] = (
+        df.get("is_cheapest", 0) + df.get("is_best_star", 0) +
+        df.get("is_best_review", 0) + df.get("is_best_location1", 0)
+    ).astype(np.int8)
+
+    # V5: Relative competitor advantage within query
+    if "comp_rate_advantage" in df.columns:
+        df["comp_advantage_rank"] = g["comp_rate_advantage"].rank(method="min", ascending=False)
+        df["comp_advantage_rank_norm"] = df["comp_advantage_rank"] / group_size
+
+    return df
+
+
+def interaction_features(df):
+    star = df["prop_starrating"].replace(0, 1)
+    df["price_per_star"] = df["price_usd"] / star
+
+    los = df["srch_length_of_stay"].replace(0, 1)
+    df["price_per_night_per_star"] = (df["price_usd"] / los) / star
+
+    df["star_x_brand"] = df["prop_starrating"] * df["prop_brand_bool"]
+
+    if "srch_query_affinity_score" in df.columns:
+        df["query_affinity_exp"] = np.exp(df["srch_query_affinity_score"].clip(upper=0))
+
+    df["distance_x_international"] = df["log_distance"] * (1 - df.get("is_domestic", 0))
+
+    if "price_rank_norm" in df.columns:
+        df["promo_x_cheap"] = df["promotion_flag"] * (1 - df["price_rank_norm"])
+
+    # V5: Booking window interactions
+    bw = df["srch_booking_window"]
+    df["is_last_minute"] = (bw <= 1).astype(np.int8)
+    df["is_short_window"] = ((bw > 1) & (bw <= 7)).astype(np.int8)
+    df["is_long_window"] = (bw > 30).astype(np.int8)
+
+    # V5: Family indicators
+    df["is_family"] = (df["srch_children_count"] > 0).astype(np.int8)
+    df["total_guests"] = df["srch_adults_count"] + df["srch_children_count"]
+    guests = df["total_guests"].replace(0, 1)
+    df["price_per_guest"] = df["price_usd"] / guests
+
+    # V5: Price deals / discount signals
+    if "price_ratio_to_hist" in df.columns:
+        df["is_discounted"] = (df["price_ratio_to_hist"] < 0.9).astype(np.int8)
+        df["is_overpriced"] = (df["price_ratio_to_hist"] > 1.2).astype(np.int8)
+
     return df
 
 
 def kfold_target_encode(df, group_col, target_col, prefix, n_folds=5, seed=42, prior_weight=30):
-    """K-fold target encoding to avoid leakage within training data.
-    Each row's encoded value is computed from folds that don't contain that row.
+    """K-fold target encoding split by srch_id to prevent leakage.
+    Rows from the same search never contribute to their own TE.
     """
+    assert "srch_id" in df.columns, "kfold TE requires srch_id for leak-safe splitting"
     global_mean = df[target_col].mean()
     result = pd.Series(np.nan, index=df.index, dtype=np.float64)
 
+    srch_ids = df["srch_id"].unique()
     rng = np.random.RandomState(seed)
-    fold_ids = rng.randint(0, n_folds, size=len(df))
+    srch_fold = pd.Series(rng.randint(0, n_folds, size=len(srch_ids)), index=srch_ids)
+    fold_ids = df["srch_id"].map(srch_fold).values
+
+    # Assert: all rows of the same srch_id are in the same fold
+    _check = pd.DataFrame({"srch_id": df["srch_id"].values, "fold": fold_ids})
+    assert _check.groupby("srch_id")["fold"].nunique().max() == 1, "srch_id split leakage!"
+    del _check
 
     for fold in range(n_folds):
         mask = fold_ids == fold
@@ -169,55 +254,180 @@ def target_encode_from_source(source_df, target_df, group_col, target_col, prefi
     return result.astype(np.float32)
 
 
+def _get_srch_folds(df, n_folds=5, seed=42):
+    """Assign each srch_id to a fold; return per-row fold array."""
+    srch_ids = df["srch_id"].unique()
+    rng = np.random.RandomState(seed)
+    srch_fold = pd.Series(rng.randint(0, n_folds, size=len(srch_ids)), index=srch_ids)
+    return df["srch_id"].map(srch_fold).values
+
+
+def kfold_group_stat(df, group_col, value_col, agg_func, fallback, n_folds=5, seed=42):
+    """OOF group statistic. Each fold's values come from other folds only."""
+    result = pd.Series(np.nan, index=df.index, dtype=np.float64)
+    fold_ids = _get_srch_folds(df, n_folds, seed)
+    for fold in range(n_folds):
+        mask = fold_ids == fold
+        oof = df[~mask]
+        mapping = oof.groupby(group_col)[value_col].agg(agg_func)
+        result.loc[mask] = df.loc[mask, group_col].map(mapping).values
+    result.fillna(fallback, inplace=True)
+    return result.astype(np.float32)
+
+
+def group_stat_from_source(source_df, target_df, group_col, value_col, agg_func, fallback):
+    """Group statistic from separate source (for val/test)."""
+    mapping = source_df.groupby(group_col)[value_col].agg(agg_func)
+    result = target_df[group_col].map(mapping).fillna(fallback)
+    return result.astype(np.float32)
+
+
+def _make_cross_key(df, col_a, col_b):
+    return df[col_a].astype(str) + "_" + df[col_b].astype(str)
+
+
 def hotel_aggregates(train_df, target_df, is_train=True):
-    """Target-encoded aggregate features.
-    For training: k-fold encoding to prevent leakage.
-    For val/test: encode from full train source.
+    """Fully OOF aggregate features.
+    Training: all target- and position-derived stats are k-fold OOF by srch_id.
+    Val/Test: all stats computed from train_df source only.
     """
-    encode_specs = [
-        ("prop_id", "click_bool", "prop_click"),
-        ("prop_id", "booking_bool", "prop_book"),
-        ("srch_destination_id", "click_bool", "dest_click"),
-        ("srch_destination_id", "booking_bool", "dest_book"),
-        ("prop_country_id", "booking_bool", "country_book"),
+    # ========= TARGET ENCODINGS (smoothed, OOF for train) =========
+    single_specs = [
+        ("prop_id", "click_bool", "prop_click", 30),
+        ("prop_id", "booking_bool", "prop_book", 30),
+        ("prop_id", "relevance", "prop_rel", 30),
+        ("srch_destination_id", "click_bool", "dest_click", 30),
+        ("srch_destination_id", "booking_bool", "dest_book", 30),
+        ("prop_country_id", "booking_bool", "country_book", 50),
+        ("site_id", "booking_bool", "site_book", 50),
     ]
 
-    if is_train:
-        for group_col, target_col, prefix in encode_specs:
+    for group_col, target_col, prefix, pw in single_specs:
+        if is_train:
             target_df[f"{prefix}_rate"] = kfold_target_encode(
-                target_df, group_col, target_col, prefix
-            )
-    else:
-        for group_col, target_col, prefix in encode_specs:
+                target_df, group_col, target_col, prefix, prior_weight=pw)
+        else:
             target_df[f"{prefix}_rate"] = target_encode_from_source(
-                train_df, target_df, group_col, target_col, prefix
-            )
+                train_df, target_df, group_col, target_col, prefix, prior_weight=pw)
 
-    # Property count (not target-dependent, no leakage)
-    prop_count = train_df.groupby("prop_id").size().reset_index(name="prop_count")
-    target_df = target_df.merge(prop_count, on="prop_id", how="left")
-    target_df["prop_count"] = target_df["prop_count"].fillna(0).astype(np.int32)
+    # Cross-entity TEs
+    cross_specs = [
+        ("prop_id", "srch_destination_id", "booking_bool", "prop_dest_book", 10),
+        ("site_id", "srch_destination_id", "booking_bool", "site_dest_book", 15),
+        ("prop_id", "site_id", "booking_bool", "prop_site_book", 15),
+        ("visitor_location_country_id", "prop_country_id", "booking_bool", "cpair_book", 20),
+        ("site_id", "prop_country_id", "booking_bool", "site_country_book", 20),
+    ]
 
-    # Property avg price and price deviation
-    prop_price = train_df.groupby("prop_id")["price_usd"].agg(["mean", "std"]).reset_index()
-    prop_price.columns = ["prop_id", "prop_mean_price", "prop_std_price"]
-    target_df = target_df.merge(prop_price, on="prop_id", how="left")
+    for col_a, col_b, target_col, prefix, pw in cross_specs:
+        cross_key = f"_xkey_{prefix}"
+        train_tmp = train_df.assign(**{cross_key: _make_cross_key(train_df, col_a, col_b)})
+        target_df[cross_key] = _make_cross_key(target_df, col_a, col_b)
+        if is_train:
+            target_df[f"{prefix}_rate"] = kfold_target_encode(
+                target_df, cross_key, target_col, prefix, prior_weight=pw)
+        else:
+            target_df[f"{prefix}_rate"] = target_encode_from_source(
+                train_tmp, target_df, cross_key, target_col, prefix, prior_weight=pw)
+        target_df.drop(columns=[cross_key], inplace=True)
+        del train_tmp
+
+    # ========= BOOKING-GIVEN-CLICK (OOF for train) =========
+    # booking_sum / click_sum per prop_id, smoothed. Applied to ALL rows.
+    alpha_bgc = 10
+    if is_train:
+        global_bgc = target_df.loc[target_df["click_bool"] == 1, "booking_bool"].mean()
+        fold_ids = _get_srch_folds(target_df)
+        bgc_result = pd.Series(np.nan, index=target_df.index, dtype=np.float64)
+        click_count_result = pd.Series(np.nan, index=target_df.index, dtype=np.float64)
+        for fold in range(5):
+            mask = fold_ids == fold
+            oof = target_df[~mask]
+            book_sum = oof.groupby("prop_id")["booking_bool"].sum()
+            click_sum = oof.groupby("prop_id")["click_bool"].sum()
+            bgc = (book_sum + alpha_bgc * global_bgc) / (click_sum + alpha_bgc)
+            bgc_result.loc[mask] = target_df.loc[mask, "prop_id"].map(bgc).values
+            click_count_result.loc[mask] = target_df.loc[mask, "prop_id"].map(click_sum).values
+        target_df["prop_book_given_click"] = bgc_result.fillna(global_bgc).astype(np.float32)
+        target_df["prop_click_count"] = click_count_result.fillna(0).astype(np.int32)
+    else:
+        global_bgc = train_df.loc[train_df["click_bool"] == 1, "booking_bool"].mean()
+        book_sum = train_df.groupby("prop_id")["booking_bool"].sum()
+        click_sum = train_df.groupby("prop_id")["click_bool"].sum()
+        bgc = (book_sum + alpha_bgc * global_bgc) / (click_sum + alpha_bgc)
+        target_df["prop_book_given_click"] = target_df["prop_id"].map(bgc).fillna(global_bgc).astype(np.float32)
+        target_df["prop_click_count"] = target_df["prop_id"].map(click_sum).fillna(0).astype(np.int32)
+
+    # ========= ENTITY COUNTS (OOF for train) =========
+    if is_train:
+        target_df["prop_count"] = kfold_group_stat(
+            target_df, "prop_id", "price_usd", "count", 0).astype(np.int32)
+        target_df["dest_count"] = kfold_group_stat(
+            target_df, "srch_destination_id", "price_usd", "count", 0).astype(np.int32)
+    else:
+        prop_count = train_df.groupby("prop_id").size()
+        target_df["prop_count"] = target_df["prop_id"].map(prop_count).fillna(0).astype(np.int32)
+        dest_count = train_df.groupby("srch_destination_id").size()
+        target_df["dest_count"] = target_df["srch_destination_id"].map(dest_count).fillna(0).astype(np.int32)
+    target_df["log_prop_count"] = np.log1p(target_df["prop_count"]).astype(np.float32)
+
+    # ========= PROPERTY PRICE STATS (OOF for train) =========
+    if is_train:
+        target_df["prop_mean_price"] = kfold_group_stat(
+            target_df, "prop_id", "price_usd", "mean", target_df["price_usd"].mean())
+        target_df["prop_std_price"] = kfold_group_stat(
+            target_df, "prop_id", "price_usd", "std", 0)
+    else:
+        pp = train_df.groupby("prop_id")["price_usd"].agg(["mean", "std"])
+        target_df["prop_mean_price"] = target_df["prop_id"].map(pp["mean"]).fillna(train_df["price_usd"].mean()).astype(np.float32)
+        target_df["prop_std_price"] = target_df["prop_id"].map(pp["std"]).fillna(0).astype(np.float32)
+
     target_df["price_vs_prop_mean"] = target_df["price_usd"] - target_df["prop_mean_price"]
     target_df["prop_price_zscore"] = (
         (target_df["price_usd"] - target_df["prop_mean_price"]) /
         target_df["prop_std_price"].replace(0, np.nan)
     )
 
-    # Property average star/review/location (not target-dependent)
-    prop_quality = train_df.groupby("prop_id").agg(
-        prop_avg_position=("position", "mean") if "position" in train_df.columns else ("prop_starrating", "first"),
-    ).reset_index()
+    # ========= PROPERTY AVG POSITION (OOF for train) =========
+    if "position" in train_df.columns:
+        if is_train:
+            target_df["_is_nonrand"] = (target_df["random_bool"] == 0).astype(np.float32)
+            target_df["_pos_x_nonrand"] = target_df["position"] * target_df["_is_nonrand"]
+            fold_ids = _get_srch_folds(target_df)
+            pos_result = pd.Series(np.nan, index=target_df.index, dtype=np.float64)
+            for fold in range(5):
+                mask = fold_ids == fold
+                oof = target_df[~mask]
+                oof_nonrand = oof[oof["random_bool"] == 0]
+                if len(oof_nonrand) > 0:
+                    prop_pos = oof_nonrand.groupby("prop_id")["position"].mean()
+                    pos_result.loc[mask] = target_df.loc[mask, "prop_id"].map(prop_pos).values
+            target_df["prop_avg_position"] = pos_result.fillna(20).astype(np.float32)
+            target_df.drop(columns=["_is_nonrand", "_pos_x_nonrand"], inplace=True)
+        else:
+            nonrand = train_df[train_df["random_bool"] == 0]
+            if len(nonrand) > 0:
+                prop_pos = nonrand.groupby("prop_id")["position"].mean()
+                target_df["prop_avg_position"] = target_df["prop_id"].map(prop_pos).fillna(20).astype(np.float32)
 
-    # Destination average price (context for "is this destination expensive?")
-    dest_price = train_df.groupby("srch_destination_id")["price_usd"].mean().reset_index()
-    dest_price.columns = ["srch_destination_id", "dest_mean_price"]
-    target_df = target_df.merge(dest_price, on="srch_destination_id", how="left")
+    # ========= DESTINATION-RELATIVE FEATURES (OOF for train) =========
+    if is_train:
+        target_df["dest_mean_price"] = kfold_group_stat(
+            target_df, "srch_destination_id", "price_usd", "mean", target_df["price_usd"].mean())
+        target_df["dest_mean_star"] = kfold_group_stat(
+            target_df, "srch_destination_id", "prop_starrating", "mean", target_df["prop_starrating"].mean())
+        target_df["dest_mean_review"] = kfold_group_stat(
+            target_df, "srch_destination_id", "prop_review_score", "mean", target_df["prop_review_score"].mean())
+    else:
+        for col, name in [("price_usd", "dest_mean_price"),
+                          ("prop_starrating", "dest_mean_star"),
+                          ("prop_review_score", "dest_mean_review")]:
+            mapping = train_df.groupby("srch_destination_id")[col].mean()
+            target_df[name] = target_df["srch_destination_id"].map(mapping).fillna(train_df[col].mean()).astype(np.float32)
+
     target_df["price_vs_dest_mean"] = target_df["price_usd"] - target_df["dest_mean_price"]
+    target_df["star_vs_dest_mean"] = target_df["prop_starrating"] - target_df["dest_mean_star"]
+    target_df["review_vs_dest_mean"] = target_df["prop_review_score"] - target_df["dest_mean_review"]
 
     return target_df
 
@@ -267,6 +477,10 @@ def downcast_floats(df):
     return df
 
 
+FORBIDDEN_FEATURES = {"position", "click_bool", "booking_bool", "gross_bookings_usd",
+                       "random_bool", "relevance", "date_time"}
+
+
 def build_features(df, agg_source=None, is_train=True):
     df = df.copy()
     df = temporal_features(df)
@@ -278,6 +492,10 @@ def build_features(df, agg_source=None, is_train=True):
     df = quality_features(df)
     df = downcast_floats(df)
     df = listwise_features(df)
+    df = interaction_features(df)
     if agg_source is not None:
         df = hotel_aggregates(agg_source, df, is_train=is_train)
+    # Defragment and downcast
+    df = df.copy()
+    df = downcast_floats(df)
     return df
