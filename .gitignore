@@ -1,8 +1,15 @@
 data/
 models/
 submissions/
+logs/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
-11
+.venv/
+
+# Track artifact metadata (json/csv/txt) but not binary predictions, parquet,
+# or submission CSVs (too large; the canonical copy lives in submissions/).
+artifacts/**/*.npy
+artifacts/**/*.parquet
+artifacts/**/submission*.csv

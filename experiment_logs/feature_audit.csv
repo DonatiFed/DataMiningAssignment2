@@ -1,0 +1,144 @@
+feature,group,importance_gain,importance_split,drift_risk,leakage_risk,needs_oof,decision,notes
+prop_location_score2,raw,1694100,3570,LOW,NONE,NO,keep,
+prop_dest_book_rate,hotel_agg_TE_cross,829144,3472,HIGH,MED,YES,TEST_HIGHER_SMOOTHING,"Cross-key TE on rare (prop,dest)/(site,dest) pairs. High overfit risk; P5 will sweep prior_weight."
+location2_rank_norm,listwise_within_query,807632,2844,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_click_rate,hotel_agg_TE_single,645998,2598,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+price_vs_prop_mean,listwise_within_query,639222,2774,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_price_zscore,hotel_agg_price_stat,582003,2868,LOW,LOW,YES,keep,Per-prop price stats (OOF). Safe.
+prop_avg_position,hotel_agg_position,512985,3650,HIGH,HIGH,YES,TEST_DROP,"Encodes position bias. Even with OOF kfold, position info still leaks via prop-id average. Test drop in P4."
+location2_rank,listwise_within_query,488956,1733,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+value_score_rank,listwise_within_query,440740,1611,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_ratio_to_hist,price,424029,3821,LOW,LOW,NO,keep,
+prop_rel_rate,hotel_agg_TE_single,341395,2104,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+loc2_vs_mean,listwise_within_query,332543,3049,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_z_score,listwise_within_query,330339,2470,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_diff_from_hist,price,311055,3233,LOW,LOW,NO,keep,
+price_vs_median,listwise_within_query,281379,2147,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_rank,listwise_within_query,276734,1238,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_site_book_rate,hotel_agg_TE_cross,261074,2854,HIGH,MED,YES,TEST_HIGHER_SMOOTHING,"Cross-key TE on rare (prop,dest)/(site,dest) pairs. High overfit risk; P5 will sweep prior_weight."
+dest_count,hotel_agg_count,251612,2417,MED,LOW,NO,keep,Counts; cold-start prop_id/dest_id fall back to 0 — possible undersignal for rare entities.
+prop_location_score1,raw,229192,2230,LOW,NONE,NO,keep,
+value_score_rank_norm,listwise_within_query,222989,2040,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+loc1_vs_mean,listwise_within_query,215595,2729,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+promo_x_cheap,interaction,207313,1353,LOW,LOW,NO,keep,
+price_vs_mean,listwise_within_query,204751,1862,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+review_vs_mean,listwise_within_query,199353,2306,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+location_total,quality,189036,2127,LOW,LOW,NO,keep,
+review_percentile,listwise_within_query,183233,2166,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+log_price_z_score,listwise_within_query,181823,1762,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+query_hotel_count,listwise_within_query,177461,1360,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_count,hotel_agg_count,176501,2379,MED,LOW,NO,keep,Counts; cold-start prop_id/dest_id fall back to 0 — possible undersignal for rare entities.
+orig_destination_distance,raw,175459,2677,LOW,NONE,NO,keep,
+prop_click_count,hotel_agg_TE_count,162104,1482,MED,LOW,NO,keep,Raw click count per prop_id. No leakage in itself; drift risk because cold-start props get 0.
+prop_std_price,hotel_agg_price_stat,159830,2249,LOW,LOW,YES,keep,Per-prop price stats (OOF). Safe.
+price_per_night_per_star,interaction,158890,2150,LOW,LOW,NO,keep,
+price_vs_dest_mean,listwise_within_query,155944,2003,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+query_star_mean,listwise_within_query,153238,2014,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_mean_price,hotel_agg_price_stat,147949,1906,LOW,LOW,YES,keep,Per-prop price stats (OOF). Safe.
+price_per_night,price,145272,2051,LOW,LOW,NO,keep,
+prop_book_rate,hotel_agg_TE_single,143262,1904,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+price_vs_max,listwise_within_query,137321,1983,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+dest_click_rate,hotel_agg_TE_single,136184,2028,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+review_vs_dest_mean,listwise_within_query,135471,1890,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+quality_rank_avg,listwise_within_query,134722,2003,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+total_cost,price,132905,2000,LOW,LOW,NO,keep,
+price_per_guest,interaction,132788,2045,LOW,LOW,NO,keep,
+srch_booking_window,raw,132341,1930,LOW,NONE,NO,keep,
+prop_book_given_click,hotel_agg_TE_book_given_click,129315,2012,MED,MED,YES,keep,Smoothed book-given-click rate per prop. OOF kfold.
+dest_mean_price,hotel_agg_dest_stat,128450,1838,LOW,LOW,YES,keep,
+price_percentile,listwise_within_query,127043,1474,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_to_min_ratio,listwise_within_query,124966,1801,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+dest_mean_star,hotel_agg_dest_stat,122178,1730,LOW,LOW,YES,keep,
+value_score,quality,121355,1650,LOW,LOW,NO,keep,
+location_total_rank_norm,listwise_within_query,120731,1819,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+review_rank_norm,listwise_within_query,119801,1634,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+dest_book_rate,hotel_agg_TE_single,119564,1836,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+star_vs_mean,listwise_within_query,114611,1513,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+dest_mean_review,hotel_agg_dest_stat,111051,1702,LOW,LOW,YES,keep,
+query_price_std,listwise_within_query,109383,1669,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+location1_rank_norm,listwise_within_query,108287,1683,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+star_percentile,listwise_within_query,108110,1408,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_per_person,price,107759,1758,LOW,LOW,NO,keep,
+site_dest_book_rate,hotel_agg_TE_cross,105608,1707,HIGH,MED,YES,TEST_HIGHER_SMOOTHING,"Cross-key TE on rare (prop,dest)/(site,dest) pairs. High overfit risk; P5 will sweep prior_weight."
+review_rank,listwise_within_query,105045,1105,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+prop_log_historical_price,raw,104868,1520,LOW,NONE,NO,keep,
+site_book_rate,hotel_agg_TE_single,103370,1496,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+price_per_star,interaction,102998,1545,LOW,LOW,NO,keep,
+srch_destination_id,raw,102148,1709,LOW,NONE,NO,keep,
+star_vs_dest_mean,listwise_within_query,101392,1527,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+value_gap,listwise_within_query,100394,1562,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_vs_min,listwise_within_query,99464,1392,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+comp_advantage_rank_norm,competitor,98221,1630,LOW,LOW,NO,keep,
+query_price_mean,listwise_within_query,97973,1448,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+starrating_rank_norm,listwise_within_query,96435,1346,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+comp_rate_pct_mean,competitor,90921,1466,LOW,LOW,NO,keep,
+price_rank_norm,listwise_within_query,85820,1173,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+country_book_rate,hotel_agg_TE_single,85011,1225,MED,LOW,YES,keep,Single-key TE with kfold OOF. Generally safe.
+price_per_room,price,81241,1248,LOW,LOW,NO,keep,
+log_distance,price,79883,1231,LOW,LOW,NO,keep,
+srch_query_affinity_score,raw,79871,992,LOW,NONE,NO,keep,
+site_country_book_rate,hotel_agg_TE_cross,77850,1230,HIGH,MED,YES,TEST_HIGHER_SMOOTHING,"Cross-key TE on rare (prop,dest)/(site,dest) pairs. High overfit risk; P5 will sweep prior_weight."
+price_usd,raw,77704,1135,LOW,NONE,NO,keep,
+cpair_book_rate,hotel_agg_TE_cross,77377,1229,HIGH,MED,YES,TEST_HIGHER_SMOOTHING,"Cross-key TE on rare (prop,dest)/(site,dest) pairs. High overfit risk; P5 will sweep prior_weight."
+comp_rate_pct_max,competitor,76909,1233,LOW,LOW,NO,keep,
+hour,temporal,75309,1246,LOW,LOW,NO,keep,
+price_ratio_to_visitor_hist,visitor,73398,813,LOW,LOW,NO,keep,
+log_prop_count,hotel_agg_count,71660,990,MED,LOW,NO,keep,Counts; cold-start prop_id/dest_id fall back to 0 — possible undersignal for rare entities.
+comp_rate_pct_min,competitor,66484,1094,LOW,LOW,NO,keep,
+query_affinity_exp,interaction,66478,843,LOW,LOW,NO,keep,
+comp_advantage_rank,competitor,63877,942,LOW,LOW,NO,keep,
+location_total_rank,listwise_within_query,57225,910,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+price_diff_from_visitor_hist,visitor,55823,682,LOW,LOW,NO,keep,
+star_review_product,quality,55170,505,LOW,LOW,NO,keep,
+starrating_rank,listwise_within_query,54760,728,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+location1_rank,listwise_within_query,53840,823,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+visitor_hist_adr_usd,raw,48213,604,LOW,NONE,NO,keep,
+abs_star_diff,visitor,48126,603,LOW,LOW,NO,keep,
+distance_x_international,interaction,48069,687,LOW,LOW,NO,keep,
+prop_review_score,raw,42345,367,LOW,NONE,NO,keep,
+visitor_location_country_id,raw,41239,647,LOW,NONE,NO,keep,
+prop_country_id,raw,39683,556,LOW,NONE,NO,keep,
+star_diff,visitor,39543,524,LOW,LOW,NO,keep,
+site_id,raw,39022,590,LOW,NONE,NO,keep,
+month,temporal,34867,577,LOW,LOW,NO,keep,
+star_x_brand,interaction,34624,340,LOW,LOW,NO,keep,
+visitor_hist_starrating,raw,32117,417,LOW,NONE,NO,keep,
+dayofweek,temporal,29011,511,LOW,LOW,NO,keep,
+promotion_flag,raw,26979,129,LOW,NONE,NO,keep,
+log_price,price,26573,416,LOW,LOW,NO,keep,
+prop_starrating,raw,26559,86,LOW,NONE,NO,keep,
+srch_length_of_stay,raw,25283,375,LOW,NONE,NO,keep,
+comp_inv_count,competitor,21456,332,LOW,LOW,NO,keep,
+prop_brand_bool,raw,21316,168,LOW,NONE,NO,keep,
+comp_rate_count,competitor,20936,350,LOW,LOW,NO,keep,
+total_guests,interaction,20637,332,LOW,LOW,NO,keep,
+srch_adults_count,raw,18447,273,LOW,NONE,NO,keep,
+comp_rate_sum,competitor,18178,290,LOW,LOW,NO,keep,
+srch_children_count,raw,16326,244,LOW,NONE,NO,keep,
+has_location_score2,missing_flag,15379,14,LOW,LOW,NO,keep,
+is_domestic,quality,13794,163,LOW,LOW,NO,keep,
+is_overpriced,interaction,11156,46,LOW,LOW,NO,keep,
+n_best_flags,listwise_within_query,10773,142,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+comp_more_expensive_count,competitor,9501,149,LOW,LOW,NO,keep,
+comp_no_inv_count,competitor,7629,138,LOW,LOW,NO,keep,
+is_last_minute,interaction,7495,86,LOW,LOW,NO,keep,
+comp_rate_advantage,competitor,6895,108,LOW,LOW,NO,keep,
+comp_cheaper_count,competitor,6553,109,LOW,LOW,NO,keep,
+srch_room_count,raw,5550,87,LOW,NONE,NO,keep,
+is_discounted,interaction,4560,25,LOW,LOW,NO,keep,
+is_family,interaction,3563,52,LOW,LOW,NO,keep,
+srch_saturday_night_bool,raw,2902,46,LOW,NONE,NO,keep,
+is_long_window,interaction,2756,38,LOW,LOW,NO,keep,
+is_short_window,interaction,2255,41,LOW,LOW,NO,keep,
+review_is_zero,quality,1968,22,LOW,LOW,NO,keep,
+is_weekend_search,temporal,1286,20,LOW,LOW,NO,keep,
+is_best_star,listwise_within_query,919,8,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+has_query_affinity,missing_flag,673,9,LOW,LOW,NO,keep,
+starrating_is_zero,quality,621,4,LOW,LOW,NO,keep,
+is_best_location1,listwise_within_query,621,9,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+is_best_review,listwise_within_query,321,4,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+has_distance,missing_flag,316,6,LOW,LOW,NO,keep,
+has_historical_price,missing_flag,267,4,LOW,LOW,NO,keep,
+is_cheapest,listwise_within_query,253,2,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+is_most_expensive,listwise_within_query,45,1,LOW,LOW,NO,keep,Computed within srch_id. Pure rank/relative features.
+has_visitor_history,missing_flag,20,0,LOW,LOW,NO,keep,

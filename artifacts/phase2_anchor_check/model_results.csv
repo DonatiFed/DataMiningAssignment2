@@ -1,0 +1,2 @@
+config_name,objective,boosting,label_gain,seed,num_leaves,learning_rate,best_iter,n_features,ndcg5,recall1,recall5,mean_booked_rank
+anchor_lg_0_1_15,lambdarank,gbdt,"0,1,15",456,400,0.03,632,143,0.4219149237443544,0.25197022767075306,0.6407618213660246,5.974168126094571
