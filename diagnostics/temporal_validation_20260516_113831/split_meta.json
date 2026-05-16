@@ -1,0 +1,33 @@
+{
+  "timestamp": "20260516_113831",
+  "total_rows": 4958347,
+  "total_searches": 199795,
+  "temporal_cutoff_date": "2013-05-21 16:55:42",
+  "temporal_train_searches": 159836,
+  "temporal_val_searches": 39959,
+  "inner_train_searches": 143853,
+  "inner_random_val_searches": 15983,
+  "temporal_train_rows": 3980039,
+  "temporal_val_rows": 978308,
+  "inner_train_rows": 3583644,
+  "inner_random_val_rows": 396395,
+  "date_ranges": {
+    "temporal_train": [
+      "2012-11-01 00:08:29",
+      "2013-05-21 16:55:36"
+    ],
+    "temporal_val": [
+      "2013-05-21 16:55:42",
+      "2013-06-30 23:58:24"
+    ],
+    "inner_train": [
+      "2012-11-01 00:08:29",
+      "2013-05-21 16:55:36"
+    ],
+    "inner_random_val": [
+      "2012-11-01 03:33:58",
+      "2013-05-21 16:52:51"
+    ]
+  },
+  "leakage_assertions_passed": true
+}

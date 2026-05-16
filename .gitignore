@@ -8,8 +8,17 @@ __pycache__/
 .DS_Store
 .venv/
 
-# Track artifact metadata (json/csv/txt) but not binary predictions, parquet,
+# Track artifact metadata (json/csv) but not binary predictions, parquet,
 # or submission CSVs (too large; the canonical copy lives in submissions/).
 artifacts/**/*.npy
 artifacts/**/*.parquet
 artifacts/**/submission*.csv
+
+# Saved LightGBM/XGBoost/CatBoost boosters are large (10–70 MB each).
+# Keep them locally for reuse but never commit them.
+diagnostics/**/*.txt
+diagnostics/**/model_*.txt
+artifacts/**/model_*.txt
+*.lgb
+*.cbm
+*.xgb
