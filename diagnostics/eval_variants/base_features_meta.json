@@ -1,0 +1,8 @@
+{
+  "n_train_rows": 3980039,
+  "n_val_rows": 978308,
+  "n_train_searches": 159836,
+  "n_val_searches": 39959,
+  "feature_count": 152,
+  "created_at": "2026-05-16T12:46:58.632398+00:00"
+}

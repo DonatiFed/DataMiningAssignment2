@@ -1,0 +1,2 @@
+feature,action,train_mean,val_mean,train_std,abs_delta_mean_over_train_std,train_null_rate,val_null_rate
+prop_click_rate_pos_adj_s40_oof,added,0.03298729740919625,0.032625275964122596,0.020038408437859534,0.018066377186503724,0.0,0.0

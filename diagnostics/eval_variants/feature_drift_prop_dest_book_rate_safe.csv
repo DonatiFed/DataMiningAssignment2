@@ -1,0 +1,2 @@
+feature,action,train_mean,val_mean,train_std,abs_delta_mean_over_train_std,train_null_rate,val_null_rate
+prop_dest_book_rate_safe,added,0.027998220470216967,0.028106024744660413,0.02797087020746309,0.0038541623353151363,0.0,0.0

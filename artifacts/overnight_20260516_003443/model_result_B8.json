@@ -1,0 +1,28 @@
+{
+  "config_name": "B8",
+  "best_iter": 117,
+  "n_features": 143,
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": "[5]",
+    "boosting_type": "gbdt",
+    "learning_rate": "0.03",
+    "num_leaves": "400",
+    "max_depth": "-1",
+    "min_child_samples": "50",
+    "subsample": "0.7",
+    "colsample_bytree": "0.6",
+    "reg_alpha": "0.1",
+    "reg_lambda": "1.0",
+    "min_split_gain": "0.0",
+    "verbose": "-1",
+    "n_jobs": "-1",
+    "seed": "456",
+    "label_gain": "0,3,15"
+  },
+  "ndcg5": 0.4007287099696336,
+  "recall1": 0.23277875072971396,
+  "recall5": 0.6138353765323993,
+  "mean_booked_rank": 6.35529772329247
+}

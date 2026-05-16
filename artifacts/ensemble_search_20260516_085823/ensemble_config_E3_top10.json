@@ -1,0 +1,26 @@
+{
+  "ensemble_id": "E3_top10",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "F13",
+    "D4",
+    "A1",
+    "B10",
+    "I3",
+    "B9",
+    "C9",
+    "C11",
+    "F1"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42520551842134724,
+    "recall1": 0.2549620548744892,
+    "recall5": 0.6453590192644484,
+    "mean_booked_rank": 5.909953298307063,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Top 10 recommended pool"
+}

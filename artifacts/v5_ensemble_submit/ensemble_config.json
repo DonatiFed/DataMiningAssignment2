@@ -1,0 +1,96 @@
+{
+  "phase": "V5_ENSEMBLE_SUBMIT",
+  "run_id": "v5_ensemble_submit",
+  "date": "2026-05-16T09:15:58.357934+00:00",
+  "method": "equal_weight_rank_average_within_srch_id",
+  "members": [
+    {
+      "id": "B3",
+      "label_gain": "0,2,15",
+      "weighting": "ipw_clip3",
+      "feature_filter": null,
+      "row_filter": null,
+      "param_overrides": {},
+      "best_iter": 326,
+      "val_ndcg5": 0.42396,
+      "description": "lg=0,2,15, w=ipw_clip3 (overnight EXCELLENT)"
+    },
+    {
+      "id": "F13",
+      "label_gain": "0,3,15",
+      "weighting": "ipw_default",
+      "feature_filter": null,
+      "row_filter": "positive_q_only",
+      "param_overrides": {},
+      "best_iter": 500,
+      "val_ndcg5": 0.42253,
+      "description": "positive queries only, lg=0,3,15"
+    },
+    {
+      "id": "D4",
+      "label_gain": "0,2,15",
+      "weighting": "ipw_default",
+      "feature_filter": "top_120",
+      "row_filter": null,
+      "param_overrides": {},
+      "best_iter": 523,
+      "val_ndcg5": 0.42228,
+      "description": "feature_filter=top_120, lg=0,2,15"
+    },
+    {
+      "id": "A1",
+      "label_gain": "0,2,12",
+      "weighting": "ipw_default",
+      "feature_filter": null,
+      "row_filter": null,
+      "param_overrides": {},
+      "best_iter": 385,
+      "val_ndcg5": 0.42205,
+      "description": "label_gain=0,2,12"
+    },
+    {
+      "id": "B10",
+      "label_gain": "0,2,20",
+      "weighting": "no_ipw",
+      "feature_filter": null,
+      "row_filter": null,
+      "param_overrides": {},
+      "best_iter": 358,
+      "val_ndcg5": 0.42198,
+      "description": "lg=0,2,20, w=no_ipw"
+    },
+    {
+      "id": "E4",
+      "label_gain": "0,2,15",
+      "weighting": "ipw_default",
+      "feature_filter": null,
+      "row_filter": null,
+      "param_overrides": {
+        "num_leaves": 400,
+        "min_child_samples": 100
+      },
+      "best_iter": 518,
+      "val_ndcg5": 0.42291,
+      "description": "num_leaves=400, min_child=100"
+    },
+    {
+      "id": "E3",
+      "label_gain": "0,2,15",
+      "weighting": "ipw_default",
+      "feature_filter": null,
+      "row_filter": null,
+      "param_overrides": {
+        "num_leaves": 512,
+        "min_child_samples": 100,
+        "reg_lambda": 2.0
+      },
+      "best_iter": 551,
+      "val_ndcg5": 0.42185,
+      "description": "num_leaves=512, min_child=100, reg_lambda=2.0"
+    }
+  ],
+  "n_members": 7,
+  "anchor_ref": "V4_ENSEMBLE (local=0.42512, Kaggle=0.42021)",
+  "expected_val_basis": "Val NDCG@5 for E2_top5 was 0.42622; for E2_top5+E4+E3 we did NOT have a frozen number \u2014 the LOO/W2 results suggested 7 robust members.",
+  "notes": "Ensemble selected from val-only search (artifacts/ensemble_search_20260516_085823). Not greedy. No weight tuning. No feature changes beyond per-member feature_filter."
+}

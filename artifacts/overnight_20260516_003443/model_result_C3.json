@@ -1,0 +1,28 @@
+{
+  "config_name": "C3",
+  "best_iter": 351,
+  "n_features": 143,
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": "[5]",
+    "boosting_type": "gbdt",
+    "learning_rate": "0.03",
+    "num_leaves": "400",
+    "max_depth": "-1",
+    "min_child_samples": "50",
+    "subsample": "0.7",
+    "colsample_bytree": "0.6",
+    "reg_alpha": "0.1",
+    "reg_lambda": "1.0",
+    "min_split_gain": "0.0",
+    "verbose": "-1",
+    "n_jobs": "-1",
+    "seed": "789",
+    "label_gain": "0,2,15"
+  },
+  "ndcg5": 0.42094382553798015,
+  "recall1": 0.2520431990659661,
+  "recall5": 0.6408347927612376,
+  "mean_booked_rank": 5.978035610040864
+}

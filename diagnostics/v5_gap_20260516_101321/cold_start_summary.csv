@@ -1,0 +1,13 @@
+metric,value
+unseen_prop_id_rate,0.0027925970870604777
+unseen_srch_destination_id_rate,0.02983676948400571
+unseen_prop_x_dest_rate,0.05354773155174952
+unseen_prop_x_site_rate,0.05766816832530686
+test_prop_count_min,0.0
+test_prop_count_p10,18.0
+test_prop_count_p25,48.0
+test_prop_count_p50,110.0
+test_prop_count_p75,248.0
+test_prop_count_p90,488.0
+test_prop_count_max,2357.0
+test_prop_count_mean,211.87094345984005

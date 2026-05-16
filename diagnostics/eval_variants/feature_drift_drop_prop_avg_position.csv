@@ -1,0 +1,2 @@
+feature,action,train_mean,val_mean,train_std,abs_delta_mean_over_train_std,train_null_rate,val_null_rate
+prop_avg_position,removed,17.226173459283217,17.24321317438212,5.94880471228434,0.0028643930878606903,0.0,0.0

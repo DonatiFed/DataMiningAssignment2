@@ -1,0 +1,21 @@
+{
+  "ensemble_id": "E5_recall_heavy",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "F13",
+    "B9",
+    "C11",
+    "F1"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42479133984198975,
+    "recall1": 0.25474314068884996,
+    "recall5": 0.6457968476357268,
+    "mean_booked_rank": 5.919804436660829,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "5 best on Recall@5"
+}

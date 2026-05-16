@@ -1,0 +1,20 @@
+{
+  "ensemble_id": "E9_strong_only",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "F13",
+    "D4",
+    "A1"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42579616984863317,
+    "recall1": 0.2564944541739638,
+    "recall5": 0.6446293053123175,
+    "mean_booked_rank": 5.9151342673671925,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "STRONG+EXCELLENT only"
+}

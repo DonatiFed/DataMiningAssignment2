@@ -1,0 +1,2 @@
+feature,action,train_mean,val_mean,train_std,abs_delta_mean_over_train_std,train_null_rate,val_null_rate
+prop_price_zscore_clipped_x_dest_click,added,0.0004157936815065189,0.010541724754075098,0.04871096274678725,0.20787786776044703,0.013501375237780333,0.018236588068379283

@@ -1,0 +1,2 @@
+feature,action,train_mean,val_mean,train_std,abs_delta_mean_over_train_std,train_null_rate,val_null_rate
+price_vs_mean_x_dest_click,added,-2.985427308079435e-08,6.245812319112118e-08,150.04566888229493,6.152286631100992e-10,0.0,0.0

@@ -1,0 +1,137 @@
+{
+  "phase": "OVERNIGHT_CANDIDATE_GENERATION",
+  "run_id": "overnight_20260516_003443",
+  "date": "2026-05-16T00:34:43.577697+00:00",
+  "v4_ensemble_kaggle": 0.42021,
+  "v4_ensemble_local": 0.42512,
+  "anchor_local": 0.42191,
+  "anchor_seed": 456,
+  "base_params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": [
+      5
+    ],
+    "boosting_type": "gbdt",
+    "learning_rate": 0.03,
+    "num_leaves": 400,
+    "max_depth": -1,
+    "min_child_samples": 50,
+    "subsample": 0.7,
+    "colsample_bytree": 0.6,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "min_split_gain": 0.0,
+    "verbose": -1,
+    "n_jobs": -1,
+    "seed": 456
+  },
+  "weighting_profiles": {
+    "ipw_default": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ]
+    },
+    "no_ipw": {
+      "base": "none"
+    },
+    "ipw_positive": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "positive_only": true
+    },
+    "ipw_clip3": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        3.0
+      ]
+    },
+    "ipw_clip5": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        5.0
+      ]
+    },
+    "rand_up_1.5": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "random_upweight": 1.5
+    },
+    "rand_up_2.0": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "random_upweight": 2.0
+    },
+    "rand_up_3.0": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "random_upweight": 3.0
+    },
+    "booking_q_2x": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "booking_query_upweight": 2.0
+    },
+    "booked_2x": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "booked_row_upweight": 2.0
+    },
+    "clicked_0.5x": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "clicked_row_upweight": 0.5
+    },
+    "down_all_zero_q": {
+      "base": "ipw",
+      "clip": [
+        0.1,
+        10.0
+      ],
+      "all_zero_query_weight": 0.1
+    }
+  },
+  "candidate_thresholds": {
+    "candidate": 0.421,
+    "strong": 0.422,
+    "excellent": 0.423,
+    "possible_overfit": 0.424,
+    "weak": 0.418
+  },
+  "n_configs_total": 99,
+  "n_configs_runnable": 92,
+  "rules": [
+    "Single models only",
+    "V4 full feature set unless feature_filter is set",
+    "V4-style Dataset pattern (fresh per config; no .construct(); no free_raw_data)",
+    "Fixed V4 split (val_frac=0.1, random_state=42)",
+    "Resumable: skip if model_result_<id>.json already exists",
+    "Catch exceptions per config; log and continue",
+    "No submissions; no full-data retrain; no ensembles"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "config_name": "H2",
+  "best_iter": null,
+  "n_features": 143,
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": "[5]",
+    "boosting_type": "dart",
+    "learning_rate": "0.03",
+    "num_leaves": "400",
+    "max_depth": "-1",
+    "min_child_samples": "50",
+    "subsample": "0.7",
+    "colsample_bytree": "0.6",
+    "reg_alpha": "0.1",
+    "reg_lambda": "1.0",
+    "min_split_gain": "0.0",
+    "verbose": "-1",
+    "n_jobs": "-1",
+    "seed": "456",
+    "label_gain": "0,2,15",
+    "drop_rate": "0.1",
+    "max_drop": "50"
+  },
+  "ndcg5": 0.4212385081025689,
+  "recall1": 0.25342965557501457,
+  "recall5": 0.6379159369527145,
+  "mean_booked_rank": 5.96606830122592
+}

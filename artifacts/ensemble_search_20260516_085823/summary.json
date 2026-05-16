@@ -1,0 +1,28 @@
+{
+  "out_dir": "/home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/artifacts/ensemble_search_20260516_085823",
+  "v4_local": 0.42512,
+  "v4_kaggle": 0.42021,
+  "anchor": 0.42191,
+  "n_candidate_pool": 34,
+  "best_deterministic": {
+    "ensemble_id": "GREEDY_FWD_FROM_B3",
+    "ndcg5": 0.4268853331326698,
+    "members": "B3,A1,E4,B6,E3,B1,D14,A2",
+    "beats_v4": "YES"
+  },
+  "best_wildcard": {
+    "ensemble_id": "W2_random_weights_000",
+    "ndcg5": 0.4262075345594431,
+    "members": "B3,F13,D4,A1,B10,I3,B9,C9,C11,F1",
+    "weights": "0.4159,0.0738,0.0375,0.1176,0.1670,0.0052,0.0654,0.0063,0.0093,0.1018",
+    "beats_v4": "YES"
+  },
+  "best_overall": {
+    "ensemble_id": "GREEDY_FWD_FROM_B3",
+    "ndcg5": 0.4268853331326698,
+    "members": "B3,A1,E4,B6,E3,B1,D14,A2",
+    "weights": "",
+    "beats_v4": "YES"
+  },
+  "elapsed_seconds": 454.78591322898865
+}

@@ -1,0 +1,6 @@
+{
+  "phase": "SMOKE_TEST",
+  "run_id": "smoke_20260516_003129",
+  "sample_frac": 0.01,
+  "num_boost_round": 50
+}

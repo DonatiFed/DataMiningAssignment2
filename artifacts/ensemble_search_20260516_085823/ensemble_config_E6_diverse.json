@@ -1,0 +1,21 @@
+{
+  "ensemble_id": "E6_diverse",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "D4",
+    "I3",
+    "B10",
+    "F13"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42564610417176474,
+    "recall1": 0.2559836544074723,
+    "recall5": 0.6451401050788091,
+    "mean_booked_rank": 5.910683012259194,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Maximum-axis-diversity 5"
+}

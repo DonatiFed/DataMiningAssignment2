@@ -18,6 +18,7 @@ artifacts/**/submission*.csv
 # Keep them locally for reuse but never commit them.
 diagnostics/**/*.txt
 diagnostics/**/model_*.txt
+diagnostics/**/*.parquet
 artifacts/**/model_*.txt
 *.lgb
 *.cbm

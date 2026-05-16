@@ -1,0 +1,62 @@
+{
+  "timestamp": "20260516_101321",
+  "out_dir": "/home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/diagnostics/v5_gap_20260516_101321",
+  "adversarial": {
+    "adversarial_auc": 1.0,
+    "interpretation": "SERIOUS",
+    "n_train_subsample": 500000,
+    "n_test_subsample": 500000,
+    "best_iteration": 72,
+    "top10_drift_features": [
+      "country_book_rate",
+      "site_book_rate",
+      "site_country_book_rate",
+      "cpair_book_rate",
+      "prop_country_id",
+      "site_id",
+      "dest_count",
+      "visitor_location_country_id",
+      "dest_mean_price",
+      "dest_mean_star"
+    ]
+  },
+  "disagreement": {
+    "reference_used": "V4_ensemble",
+    "v5_vs_ref_mean_top5_overlap": 4.702644463264662,
+    "v5_vs_ref_mean_spearman": 0.9868862915003718,
+    "high_disagreement_threshold": 1.1875,
+    "intra_v5_max_mean_abs_diff": 1.283318042755127,
+    "intra_v5_max_member": "B10"
+  },
+  "position": {
+    "top_pos_corr_features": [
+      "prop_avg_position",
+      "location2_rank",
+      "value_score_rank",
+      "query_hotel_count",
+      "location2_rank_norm",
+      "location_total_rank",
+      "starrating_rank",
+      "prop_dest_book_rate",
+      "prop_location_score2",
+      "prop_click_rate"
+    ],
+    "n_position_leaky_suspects": 7,
+    "position_leaky_suspects": [
+      "prop_avg_position",
+      "prop_location_score2",
+      "prop_click_rate",
+      "query_hotel_count",
+      "prop_site_book_rate",
+      "dest_click_rate",
+      "loc2_vs_mean"
+    ]
+  },
+  "cold_start": {
+    "unseen_prop_rate": 0.0027925970870604777,
+    "unseen_dest_rate": 0.02983676948400571,
+    "unseen_prop_x_dest_rate": 0.05354773155174952,
+    "unseen_prop_x_site_rate": 0.05766816832530686,
+    "test_prop_count_median": 110.0
+  }
+}

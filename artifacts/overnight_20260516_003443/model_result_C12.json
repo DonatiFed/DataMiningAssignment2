@@ -1,0 +1,28 @@
+{
+  "config_name": "C12",
+  "best_iter": 375,
+  "n_features": 143,
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": "[5]",
+    "boosting_type": "gbdt",
+    "learning_rate": "0.03",
+    "num_leaves": "400",
+    "max_depth": "-1",
+    "min_child_samples": "50",
+    "subsample": "0.7",
+    "colsample_bytree": "0.6",
+    "reg_alpha": "0.1",
+    "reg_lambda": "1.0",
+    "min_split_gain": "0.0",
+    "verbose": "-1",
+    "n_jobs": "-1",
+    "seed": "789",
+    "label_gain": "0,2,20"
+  },
+  "ndcg5": 0.4204783850557079,
+  "recall1": 0.25269994162288384,
+  "recall5": 0.6391564506713369,
+  "mean_booked_rank": 5.969279042615295
+}

@@ -1,0 +1,21 @@
+{
+  "ensemble_id": "E8_no_risky_position",
+  "method": "equal_rank_avg",
+  "members": [
+    "D4",
+    "F13",
+    "B10",
+    "I3",
+    "F1"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.4244723609109838,
+    "recall1": 0.2535026269702277,
+    "recall5": 0.6445563339171045,
+    "mean_booked_rank": 5.9186368943374195,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "5 members, no B3"
+}

@@ -1,0 +1,19 @@
+{
+  "ensemble_id": "E1_top3",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "F13",
+    "D4"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42534254859070536,
+    "recall1": 0.2568593111500292,
+    "recall5": 0.6433158201984822,
+    "mean_booked_rank": 5.913018096906013,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Top 3 by val NDCG"
+}

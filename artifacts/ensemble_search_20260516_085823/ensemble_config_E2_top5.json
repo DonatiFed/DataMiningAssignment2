@@ -1,0 +1,21 @@
+{
+  "ensemble_id": "E2_top5",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "F13",
+    "D4",
+    "A1",
+    "B10"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.4262159499557771,
+    "recall1": 0.25561879743140686,
+    "recall5": 0.645942790426153,
+    "mean_booked_rank": 5.910464098073555,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Top 5"
+}

@@ -1,0 +1,24 @@
+{
+  "ensemble_id": "E7_no_positive_only",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "D4",
+    "A1",
+    "B10",
+    "I3",
+    "B9",
+    "C9",
+    "C11"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42569396980194957,
+    "recall1": 0.2564944541739638,
+    "recall5": 0.6452130764740222,
+    "mean_booked_rank": 5.907107413893754,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Top 10 minus F13/F1 (no row filters)"
+}

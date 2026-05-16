@@ -1,0 +1,21 @@
+{
+  "ensemble_id": "E4_robust",
+  "method": "equal_rank_avg",
+  "members": [
+    "B3",
+    "D4",
+    "B10",
+    "I3",
+    "F1"
+  ],
+  "weights": null,
+  "metrics": {
+    "ndcg5": 0.42529065840757396,
+    "recall1": 0.25445125510799765,
+    "recall5": 0.6449941622883829,
+    "mean_booked_rank": 5.9152802101576185,
+    "n_queries": 19979,
+    "n_booked": 13704
+  },
+  "note": "Diverse 5: weighting/feat/boost/row"
+}

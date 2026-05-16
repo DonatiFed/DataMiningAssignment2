@@ -1,0 +1,19 @@
+{
+  "adversarial_auc": 1.0,
+  "interpretation": "SERIOUS",
+  "n_train_subsample": 500000,
+  "n_test_subsample": 500000,
+  "best_iteration": 72,
+  "top10_drift_features": [
+    "country_book_rate",
+    "site_book_rate",
+    "site_country_book_rate",
+    "cpair_book_rate",
+    "prop_country_id",
+    "site_id",
+    "dest_count",
+    "visitor_location_country_id",
+    "dest_mean_price",
+    "dest_mean_star"
+  ]
+}

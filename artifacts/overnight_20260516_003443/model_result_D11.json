@@ -1,0 +1,28 @@
+{
+  "config_name": "D11",
+  "best_iter": 514,
+  "n_features": 140,
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": "[5]",
+    "boosting_type": "gbdt",
+    "learning_rate": "0.03",
+    "num_leaves": "400",
+    "max_depth": "-1",
+    "min_child_samples": "50",
+    "subsample": "0.7",
+    "colsample_bytree": "0.6",
+    "reg_alpha": "0.1",
+    "reg_lambda": "1.0",
+    "min_split_gain": "0.0",
+    "verbose": "-1",
+    "n_jobs": "-1",
+    "seed": "456",
+    "label_gain": "0,2,15"
+  },
+  "ndcg5": 0.4214466832259077,
+  "recall1": 0.25189725627554,
+  "recall5": 0.6407618213660246,
+  "mean_booked_rank": 5.97343841214244
+}
