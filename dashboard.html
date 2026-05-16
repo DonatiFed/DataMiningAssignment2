@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DM Assignment 2 — Results Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0e1a;--surface:#141728;--surface2:#1c2035;--border:#252a45;
+  --text:#e2e6f3;--muted:#6b7594;--accent:#6366f1;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+.hdr{padding:18px 32px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:14px}
+.hdr h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.hdr p{font-size:12px;color:var(--muted)}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);background:var(--border);gap:1px;border-bottom:1px solid var(--border)}
+.card{background:var(--surface);padding:18px 22px}
+.card-lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+.card-val{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-bottom:3px;font-variant-numeric:tabular-nums}
+.card-sub{font-size:12px;color:var(--muted)}
+.c-green .card-val{color:var(--green)}.c-blue .card-val{color:var(--blue)}
+.c-amber .card-val{color:var(--amber)}.c-red .card-val{color:var(--red)}
+
+/* TABS */
+.tabs-nav{display:flex;padding:0 32px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.tab-btn{background:none;border:none;color:var(--muted);padding:13px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* TAB BODY */
+.tab{display:none;padding:26px 32px}
+.tab.active{display:block}
+
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
+.mb{margin-bottom:20px}
+.pt{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ps{font-size:12px;color:var(--muted);margin-bottom:14px}
+.sec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.03em;white-space:nowrap}
+.bg{background:rgba(34,197,94,.15);color:#4ade80}
+.br{background:rgba(239,68,68,.15);color:#f87171}
+.ba{background:rgba(245,158,11,.15);color:#fcd34d}
+.bb{background:rgba(59,130,246,.15);color:#93c5fd}
+.bp{background:rgba(168,85,247,.15);color:#c4b5fd}
+.bx{background:rgba(107,117,148,.15);color:var(--muted)}
+
+/* TABLES */
+.tw{overflow-x:auto}
+.ts{max-height:420px;overflow-y:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 13px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface)}
+td{padding:9px 13px;border-bottom:1px solid rgba(37,42,69,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.mono{font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px}
+.tr-w td{background:rgba(34,197,94,.06)}.tr-r td{background:rgba(59,130,246,.04)}
+.tr-a td{background:rgba(168,85,247,.05)}.tr-i td{opacity:.5}
+.tr-b td{background:rgba(245,158,11,.04)}
+
+/* DELTA */
+.pos{color:#4ade80;font-weight:600}.neg{color:#f87171}.neu{color:var(--muted)}
+
+/* RISK */
+.rh{color:#f87171}.rm{color:#fcd34d}.rl{color:var(--muted)}.rn{color:#374151}
+
+/* METRIC TOGGLE */
+.mtog{display:flex;gap:6px;margin-bottom:14px}
+.mbtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:4px 13px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.mbtn:hover{color:var(--text)}
+.mbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* INSIGHT / WARNING */
+.insight{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);border-radius:8px;padding:16px 20px;margin-bottom:14px}
+.insight-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:10px}
+.insight li{font-size:13px;color:var(--text);padding-left:16px;position:relative;margin-bottom:5px;list-style:none}
+.insight li::before{content:"→";position:absolute;left:0;color:var(--accent)}
+.warn{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:14px 18px;font-size:13px;color:#fca5a5}
+.warn strong{color:#f87171}
+
+/* FILTERS */
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.flbl{font-size:12px;color:var(--muted)}
+.chip{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s}
+.chip:hover{color:var(--text)}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(99,102,241,.1)}
+
+/* SEARCH */
+.search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 11px;font-size:13px;outline:none;width:190px}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--muted)}
+
+/* GAIN BAR */
+.gb-wrap{display:flex;align-items:center;gap:7px}
+.gb-bg{flex:1;height:4px;background:var(--surface2);border-radius:2px;min-width:50px}
+.gb-fill{height:4px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <h1>DM Assignment 2 — Experiment Results</h1>
+  <p>LightGBM LambdaRank · Hotel Search Ranking · Expedia Dataset · 2026-05-16</p>
+</header>
+
+<div class="cards">
+  <div class="card c-green">
+    <div class="card-lbl">V4 Ensemble · Local NDCG@5</div>
+    <div class="card-val">0.4251</div>
+    <div class="card-sub">8-model rank-avg · production baseline</div>
+  </div>
+  <div class="card c-blue">
+    <div class="card-lbl">V4 Ensemble · Kaggle NDCG@5</div>
+    <div class="card-val">0.4202</div>
+    <div class="card-sub">Public leaderboard · −0.0049 local gap</div>
+  </div>
+  <div class="card c-amber">
+    <div class="card-lbl">Best Phase 2 · Local NDCG@5</div>
+    <div class="card-val">0.4226</div>
+    <div class="card-sub">label_gain 0,2,15 · 470 iters · seed 456</div>
+  </div>
+  <div class="card c-red">
+    <div class="card-lbl">Phase 2 Submitted · Kaggle</div>
+    <div class="card-val">0.4164</div>
+    <div class="card-sub">v4.2 · −0.0038 vs ensemble</div>
+  </div>
+</div>
+
+<nav class="tabs-nav">
+  <button class="tab-btn active" onclick="showTab('overview',this)">Overview</button>
+  <button class="tab-btn" onclick="showTab('sweep',this)">Phase 2 Sweep</button>
+  <button class="tab-btn" onclick="showTab('features',this)">Feature Importance</button>
+  <button class="tab-btn" onclick="showTab('log',this)">Experiment Log</button>
+</nav>
+
+<!-- ═══════════════════ OVERVIEW ═══════════════════ -->
+<div id="tab-overview" class="tab active">
+  <div class="g2 mb">
+    <div class="panel">
+      <div class="pt">Local vs Kaggle gap</div>
+      <div class="ps">Ensemble diversity is worth ~0.004 NDCG on the public leaderboard</div>
+      <div style="position:relative;height:230px"><canvas id="gapChart"></canvas></div>
+    </div>
+    <div>
+      <div class="insight">
+        <div class="insight-title">Phase 2 key findings</div>
+        <ul>
+          <li>Best config: <strong>label_gain 0,2,15</strong> — NDCG@5 0.42258, Recall@1 0.2557</li>
+          <li>Runner-up: <strong>0,1,18</strong> — best Recall@5 (0.6418) and Recall@1 (0.2547)</li>
+          <li><strong>0,1,12</strong> is clearly worst — early stop at iter 240, lowest on all metrics</li>
+          <li>Submitted 0,2,15 to Kaggle → 0.41639 (−0.0038 vs ensemble); local–Kaggle gap = −0.0062</li>
+          <li>Root cause: single model loses ensemble diversity; <strong>V4 ensemble remains production</strong></li>
+        </ul>
+      </div>
+      <div class="warn">
+        <strong>6 INVALID runs excluded.</strong> First Phase 2 attempt called <code>ds.construct()</code> outside the training loop — binning used default <code>data_random_seed=1</code> instead of <code>seed=456</code>. Anchor check confirmed the bug; results are tainted and excluded from all analysis.
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Experiment phases at a glance</div>
+  <div class="g3">
+    <div class="panel">
+      <div class="pt">Phase 0 — Baselines</div>
+      <div class="ps">Frozen reference models, never retrained</div>
+      <table>
+        <tr><td>V4 Ensemble (8 models)</td><td class="mono" style="text-align:right;color:var(--green)">0.42512</td></tr>
+        <tr><td style="color:var(--muted);font-size:12px">Kaggle</td><td class="mono" style="text-align:right;color:var(--blue)">0.42021</td></tr>
+        <tr><td>V4 Best Single (bal15)</td><td class="mono" style="text-align:right;color:var(--amber)">0.42191</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="pt">Phase 2 — Label Gain Sweep</div>
+      <div class="ps">6 configs · corrected Dataset pattern · seed 456</div>
+      <table>
+        <tr><td>Winner: 0,2,15</td><td class="mono" style="text-align:right;color:var(--green)">0.42258</td></tr>
+        <tr><td>Δ vs V4 best single</td><td class="mono pos" style="text-align:right">+0.00067</td></tr>
+        <tr><td>Submitted (Kaggle)</td><td class="mono" style="text-align:right;color:var(--red)">0.41639</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="pt">Planned phases</div>
+      <div class="ps">Next experiments to run</div>
+      <table>
+        <tr><td><span class="badge bx">P3</span></td><td style="color:var(--muted)">Weighting / IPW sweep</td></tr>
+        <tr><td><span class="badge bx">P4</span></td><td style="color:var(--muted)">Drop <code>prop_avg_position</code></td></tr>
+        <tr><td><span class="badge bx">P5</span></td><td style="color:var(--muted)">TE smoothing (prior_weight)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PHASE 2 SWEEP ═══════════════════ -->
+<div id="tab-sweep" class="tab">
+  <div class="g4 mb">
+    <div class="panel">
+      <div class="card-lbl">Winner NDCG@5</div>
+      <div class="card-val" style="font-size:22px;color:var(--green);margin-top:4px">0.42258</div>
+      <div class="card-sub">label_gain 0,2,15</div>
+    </div>
+    <div class="panel">
+      <div class="card-lbl">Winner Recall@1</div>
+      <div class="card-val" style="font-size:22px;color:var(--green);margin-top:4px">0.2557</div>
+      <div class="card-sub">Best in sweep</div>
+    </div>
+    <div class="panel">
+      <div class="card-lbl">Winner Recall@5</div>
+      <div class="card-val" style="font-size:22px;color:var(--amber);margin-top:4px">0.6412</div>
+      <div class="card-sub">2nd — 0,1,18 wins at 0.6418</div>
+    </div>
+    <div class="panel">
+      <div class="card-lbl">Winner Mean Rank ↓</div>
+      <div class="card-val" style="font-size:22px;color:var(--green);margin-top:4px">5.958</div>
+      <div class="card-sub">Best (lower = booked hotel ranked higher)</div>
+    </div>
+  </div>
+
+  <div class="panel mb">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+      <div>
+        <div class="pt">Config comparison — Phase 2 sweep</div>
+        <div class="ps">Purple dashed = anchor baseline (0,1,15). <span style="color:#4ade80">■</span> winner &nbsp;<span style="color:#93c5fd">■</span> runner-up &nbsp;<span style="color:#c4b5fd">■</span> anchor &nbsp;<span style="color:#f87171">■</span> weakest</div>
+      </div>
+      <div class="mtog">
+        <button class="mbtn active" onclick="setMetric('ndcg',this)">NDCG@5</button>
+        <button class="mbtn" onclick="setMetric('r1',this)">Recall@1</button>
+        <button class="mbtn" onclick="setMetric('r5',this)">Recall@5</button>
+        <button class="mbtn" onclick="setMetric('mbr',this)">Mean Rank ↓</button>
+      </div>
+    </div>
+    <div style="position:relative;height:270px"><canvas id="sweepChart"></canvas></div>
+  </div>
+
+  <div class="panel">
+    <div class="pt" style="margin-bottom:12px">All Phase 2 results — full metrics</div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Config (label_gain)</th><th>Iters</th>
+          <th>NDCG@5</th><th>Recall@1</th><th>Recall@5</th><th>Mean Rank ↓</th>
+          <th>Δ NDCG vs anchor</th><th>Status</th>
+        </tr></thead>
+        <tbody id="sweep-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FEATURES ═══════════════════ -->
+<div id="tab-features" class="tab">
+  <div class="g2 mb" style="align-items:start">
+    <div class="panel">
+      <div class="pt">Top 25 features — Importance Gain</div>
+      <div class="ps">Submitted model (label_gain 0,2,15, full retrain). Color = feature group.</div>
+      <div style="position:relative;height:490px"><canvas id="featChart"></canvas></div>
+    </div>
+    <div>
+      <div class="panel mb">
+        <div class="pt">Feature groups</div>
+        <div class="ps">Distribution across 143 features</div>
+        <div style="position:relative;height:220px"><canvas id="groupChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="pt" style="margin-bottom:10px">Decision summary</div>
+        <table>
+          <tr><td><span class="badge bg">keep</span></td><td class="mono" style="text-align:right">137</td><td style="color:var(--muted);font-size:12px">features retained</td></tr>
+          <tr><td><span class="badge ba">smooth?</span></td><td class="mono" style="text-align:right">5</td><td style="color:var(--muted);font-size:12px">cross-key TEs, high overfit risk</td></tr>
+          <tr><td><span class="badge br">drop?</span></td><td class="mono" style="text-align:right">1</td><td style="color:var(--muted);font-size:12px">prop_avg_position (position bias)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div class="pt">All 143 features</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="frow" style="margin-bottom:0">
+          <span class="flbl">Decision:</span>
+          <button class="chip active" data-ff="all">All</button>
+          <button class="chip" data-ff="keep">Keep</button>
+          <button class="chip" data-ff="TEST_DROP">Test Drop</button>
+          <button class="chip" data-ff="TEST_HIGHER_SMOOTHING">Test Smoothing</button>
+        </div>
+        <input class="search" id="fsearch" placeholder="Search feature…" oninput="renderFeat()">
+      </div>
+    </div>
+    <div class="tw ts">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Feature</th><th>Group</th><th>Gain</th><th style="min-width:90px"></th>
+          <th>Drift</th><th>Leakage</th><th>OOF</th><th>Decision</th>
+        </tr></thead>
+        <tbody id="feat-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LOG ═══════════════════ -->
+<div id="tab-log" class="tab">
+  <div class="frow mb">
+    <span class="flbl">Filter:</span>
+    <button class="chip active" data-lf="all">All</button>
+    <button class="chip" data-lf="baseline">Baselines</button>
+    <button class="chip" data-lf="valid">Valid P2</button>
+    <button class="chip" data-lf="submit">Submitted</button>
+    <button class="chip" data-lf="invalid">Invalid</button>
+  </div>
+  <div class="panel">
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Phase</th><th>Experiment ID</th><th>Config</th>
+          <th>Local NDCG@5</th><th>Kaggle</th><th>Δ vs V4 Single</th><th>Kept</th><th>Status</th>
+        </tr></thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── DATA ─────────────────────────────────────────────────────────────── */
+
+const ANCHOR = 0.4219149237443544;
+
+const SWEEP = [
+  {lbl:"Anchor  (0,1,15)", iter:632, ndcg:0.4219149237443544, r1:0.25197022767075306, r5:0.6407618213660246, mbr:5.974168, type:"anchor"},
+  {lbl:"0,1,10",           iter:647, ndcg:0.4219152388029706, r1:0.2525539988324576,  r5:0.6414915353181553, mbr:5.945126, type:"normal"},
+  {lbl:"0,1,12",           iter:240, ndcg:0.4186950760296210, r1:0.2476649153531815,  r5:0.6373321657910099, mbr:6.026853, type:"worst"},
+  {lbl:"0,1,15",           iter:632, ndcg:0.4219149237443544, r1:0.251970227670753,   r5:0.6407618213660246, mbr:5.974168, type:"normal"},
+  {lbl:"0,1,18",           iter:315, ndcg:0.4222852115176543, r1:0.2547431406888499,  r5:0.6417834208990076, mbr:5.971541, type:"runner"},
+  {lbl:"0,1,20",           iter:389, ndcg:0.4211600359481479, r1:0.2528458844133099,  r5:0.6398861646234676, mbr:5.971176, type:"normal"},
+  {lbl:"0,2,15  ★",        iter:470, ndcg:0.4225849286075321, r1:0.25569176882662,    r5:0.6411996497373029, mbr:5.957968, type:"winner"},
+];
+
+const EXPS = [
+  {ph:"P0",     id:"V4_ENSEMBLE",         cfg:"8-model rank-avg ensemble",      loc:0.42512, kag:0.42021, d:null,      kept:"YES",    t:"baseline"},
+  {ph:"P0",     id:"V4_BEST_SINGLE",      cfg:"LambdaRank bal15 · ipw_clipped", loc:0.42191, kag:null,   d:0,         kept:"YES",    t:"baseline"},
+  {ph:"P2",     id:"P2_ANCHOR_CHECK",     cfg:"0,1,15 anchor reproduction",     loc:0.42191, kag:null,   d:-0.000003, kept:"ANCHOR", t:"anchor"},
+  {ph:"P2",     id:"P2_lg_0_1_10",        cfg:"label_gain 0,1,10",              loc:0.42192, kag:null,   d:-0.003205, kept:"TBD",    t:"valid"},
+  {ph:"P2",     id:"P2_lg_0_1_12",        cfg:"label_gain 0,1,12",              loc:0.41870, kag:null,   d:-0.006425, kept:"TBD",    t:"valid"},
+  {ph:"P2",     id:"P2_lg_0_1_15",        cfg:"label_gain 0,1,15",              loc:0.42191, kag:null,   d:-0.003205, kept:"TBD",    t:"valid"},
+  {ph:"P2",     id:"P2_lg_0_1_18",        cfg:"label_gain 0,1,18",              loc:0.42229, kag:null,   d:-0.002835, kept:"TBD",    t:"valid"},
+  {ph:"P2",     id:"P2_lg_0_1_20",        cfg:"label_gain 0,1,20",              loc:0.42116, kag:null,   d:-0.003960, kept:"TBD",    t:"valid"},
+  {ph:"P2",     id:"P2_lg_0_2_15  ★",     cfg:"label_gain 0,2,15",              loc:0.42258, kag:null,   d:-0.002535, kept:"TBD",    t:"valid"},
+  {ph:"P2_sub", id:"V4.2_SUBMIT",         cfg:"0,2,15 · 470 rounds · full data",loc:0.42258, kag:0.41639,d:-0.002535, kept:"NO",     t:"submit"},
+  {ph:"P2_INV", id:"P2_INVALID_0_1_10",   cfg:"0,1,10 — tainted",               loc:0.42096, kag:null,   d:-0.004164, kept:"NO",     t:"invalid"},
+  {ph:"P2_INV", id:"P2_INVALID_0_1_12",   cfg:"0,1,12 — tainted",               loc:0.42154, kag:null,   d:-0.003584, kept:"NO",     t:"invalid"},
+  {ph:"P2_INV", id:"P2_INVALID_0_1_15",   cfg:"0,1,15 — tainted",               loc:0.41951, kag:null,   d:-0.005608, kept:"NO",     t:"invalid"},
+  {ph:"P2_INV", id:"P2_INVALID_0_1_18",   cfg:"0,1,18 — tainted",               loc:0.41960, kag:null,   d:-0.005515, kept:"NO",     t:"invalid"},
+  {ph:"P2_INV", id:"P2_INVALID_0_1_20",   cfg:"0,1,20 — tainted",               loc:0.42130, kag:null,   d:-0.003824, kept:"NO",     t:"invalid"},
+  {ph:"P2_INV", id:"P2_INVALID_0_2_15",   cfg:"0,2,15 — tainted",               loc:0.42063, kag:null,   d:-0.004488, kept:"NO",     t:"invalid"},
+];
+
+// [group, drift, leakage, oof, decision]
+const AUDIT = {
+  prop_location_score2:["raw","LOW","NONE","NO","keep"],
+  prop_dest_book_rate:["hotel_agg_TE_cross","HIGH","MED","YES","TEST_HIGHER_SMOOTHING"],
+  location2_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_click_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  price_vs_prop_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_price_zscore:["hotel_agg_price_stat","LOW","LOW","YES","keep"],
+  prop_avg_position:["hotel_agg_position","HIGH","HIGH","YES","TEST_DROP"],
+  location2_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  value_score_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_ratio_to_hist:["price","LOW","LOW","NO","keep"],
+  prop_rel_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  price_z_score:["listwise_within_query","LOW","LOW","NO","keep"],
+  loc2_vs_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_diff_from_hist:["price","LOW","LOW","NO","keep"],
+  prop_site_book_rate:["hotel_agg_TE_cross","HIGH","MED","YES","TEST_HIGHER_SMOOTHING"],
+  price_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_vs_median:["listwise_within_query","LOW","LOW","NO","keep"],
+  dest_count:["hotel_agg_count","MED","LOW","NO","keep"],
+  prop_location_score1:["raw","LOW","NONE","NO","keep"],
+  value_score_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  loc1_vs_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  promo_x_cheap:["interaction","LOW","LOW","NO","keep"],
+  price_vs_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  review_vs_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  location_total:["quality","LOW","LOW","NO","keep"],
+  query_hotel_count:["listwise_within_query","LOW","LOW","NO","keep"],
+  review_percentile:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_count:["hotel_agg_count","MED","LOW","NO","keep"],
+  orig_destination_distance:["raw","LOW","NONE","NO","keep"],
+  log_price_z_score:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_std_price:["hotel_agg_price_stat","LOW","LOW","YES","keep"],
+  prop_click_count:["hotel_agg_TE_count","MED","LOW","NO","keep"],
+  prop_book_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  price_vs_dest_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_per_night_per_star:["interaction","LOW","LOW","NO","keep"],
+  query_star_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_mean_price:["hotel_agg_price_stat","LOW","LOW","YES","keep"],
+  price_per_night:["price","LOW","LOW","NO","keep"],
+  price_vs_max:["listwise_within_query","LOW","LOW","NO","keep"],
+  dest_click_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  price_per_guest:["interaction","LOW","LOW","NO","keep"],
+  quality_rank_avg:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_book_given_click:["hotel_agg_TE_book_given_click","MED","MED","YES","keep"],
+  srch_booking_window:["raw","LOW","NONE","NO","keep"],
+  price_percentile:["listwise_within_query","LOW","LOW","NO","keep"],
+  total_cost:["price","LOW","LOW","NO","keep"],
+  review_vs_dest_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_to_min_ratio:["listwise_within_query","LOW","LOW","NO","keep"],
+  dest_mean_star:["hotel_agg_dest_stat","LOW","LOW","YES","keep"],
+  review_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  dest_mean_price:["hotel_agg_dest_stat","LOW","LOW","YES","keep"],
+  dest_book_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  location_total_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  dest_mean_review:["hotel_agg_dest_stat","LOW","LOW","YES","keep"],
+  star_vs_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  location1_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_per_star:["interaction","LOW","LOW","NO","keep"],
+  review_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  value_score:["quality","LOW","LOW","NO","keep"],
+  query_price_std:["listwise_within_query","LOW","LOW","NO","keep"],
+  prop_log_historical_price:["raw","LOW","NONE","NO","keep"],
+  price_per_person:["price","LOW","LOW","NO","keep"],
+  star_vs_dest_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  site_book_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  star_percentile:["listwise_within_query","LOW","LOW","NO","keep"],
+  srch_destination_id:["raw","LOW","NONE","NO","keep"],
+  starrating_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  site_dest_book_rate:["hotel_agg_TE_cross","HIGH","MED","YES","TEST_HIGHER_SMOOTHING"],
+  comp_advantage_rank_norm:["competitor","LOW","LOW","NO","keep"],
+  value_gap:["listwise_within_query","LOW","LOW","NO","keep"],
+  query_price_mean:["listwise_within_query","LOW","LOW","NO","keep"],
+  price_vs_min:["listwise_within_query","LOW","LOW","NO","keep"],
+  srch_query_affinity_score:["raw","LOW","NONE","NO","keep"],
+  comp_rate_pct_mean:["competitor","LOW","LOW","NO","keep"],
+  price_rank_norm:["listwise_within_query","LOW","LOW","NO","keep"],
+  log_distance:["price","LOW","LOW","NO","keep"],
+  country_book_rate:["hotel_agg_TE_single","MED","LOW","YES","keep"],
+  site_country_book_rate:["hotel_agg_TE_cross","HIGH","MED","YES","TEST_HIGHER_SMOOTHING"],
+  price_usd:["raw","LOW","NONE","NO","keep"],
+  price_per_room:["price","LOW","LOW","NO","keep"],
+  price_ratio_to_visitor_hist:["visitor","LOW","LOW","NO","keep"],
+  log_prop_count:["hotel_agg_count","MED","LOW","NO","keep"],
+  comp_rate_pct_max:["competitor","LOW","LOW","NO","keep"],
+  cpair_book_rate:["hotel_agg_TE_cross","HIGH","MED","YES","TEST_HIGHER_SMOOTHING"],
+  query_affinity_exp:["interaction","LOW","LOW","NO","keep"],
+  hour:["temporal","LOW","LOW","NO","keep"],
+  comp_rate_pct_min:["competitor","LOW","LOW","NO","keep"],
+  location_total_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  comp_advantage_rank:["competitor","LOW","LOW","NO","keep"],
+  price_diff_from_visitor_hist:["visitor","LOW","LOW","NO","keep"],
+  location1_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  starrating_rank:["listwise_within_query","LOW","LOW","NO","keep"],
+  star_review_product:["quality","LOW","LOW","NO","keep"],
+  abs_star_diff:["visitor","LOW","LOW","NO","keep"],
+  visitor_hist_adr_usd:["raw","LOW","NONE","NO","keep"],
+  prop_review_score:["raw","LOW","NONE","NO","keep"],
+  distance_x_international:["interaction","LOW","LOW","NO","keep"],
+  visitor_location_country_id:["raw","LOW","NONE","NO","keep"],
+  star_diff:["visitor","LOW","LOW","NO","keep"],
+  prop_country_id:["raw","LOW","NONE","NO","keep"],
+  site_id:["raw","LOW","NONE","NO","keep"],
+  star_x_brand:["interaction","LOW","LOW","NO","keep"],
+  visitor_hist_starrating:["raw","LOW","NONE","NO","keep"],
+  month:["temporal","LOW","LOW","NO","keep"],
+  prop_starrating:["raw","LOW","NONE","NO","keep"],
+  dayofweek:["temporal","LOW","LOW","NO","keep"],
+  log_price:["price","LOW","LOW","NO","keep"],
+  promotion_flag:["raw","LOW","NONE","NO","keep"],
+  srch_length_of_stay:["raw","LOW","NONE","NO","keep"],
+  comp_inv_count:["competitor","LOW","LOW","NO","keep"],
+  comp_rate_count:["competitor","LOW","LOW","NO","keep"],
+  total_guests:["interaction","LOW","LOW","NO","keep"],
+  prop_brand_bool:["raw","LOW","NONE","NO","keep"],
+  srch_adults_count:["raw","LOW","NONE","NO","keep"],
+  srch_children_count:["raw","LOW","NONE","NO","keep"],
+  comp_rate_sum:["competitor","LOW","LOW","NO","keep"],
+  has_location_score2:["missing_flag","LOW","LOW","NO","keep"],
+  is_domestic:["quality","LOW","LOW","NO","keep"],
+  n_best_flags:["listwise_within_query","LOW","LOW","NO","keep"],
+  is_overpriced:["interaction","LOW","LOW","NO","keep"],
+  comp_more_expensive_count:["competitor","LOW","LOW","NO","keep"],
+  comp_rate_advantage:["competitor","LOW","LOW","NO","keep"],
+  is_last_minute:["interaction","LOW","LOW","NO","keep"],
+  comp_no_inv_count:["competitor","LOW","LOW","NO","keep"],
+  comp_cheaper_count:["competitor","LOW","LOW","NO","keep"],
+  srch_room_count:["raw","LOW","NONE","NO","keep"],
+  is_family:["interaction","LOW","LOW","NO","keep"],
+  is_discounted:["interaction","LOW","LOW","NO","keep"],
+  is_long_window:["interaction","LOW","LOW","NO","keep"],
+  is_short_window:["interaction","LOW","LOW","NO","keep"],
+  review_is_zero:["quality","LOW","LOW","NO","keep"],
+  is_weekend_search:["temporal","LOW","LOW","NO","keep"],
+  is_best_location1:["listwise_within_query","LOW","LOW","NO","keep"],
+  is_best_star:["listwise_within_query","LOW","LOW","NO","keep"],
+  starrating_is_zero:["quality","LOW","LOW","NO","keep"],
+  srch_saturday_night_bool:["raw","LOW","NONE","NO","keep"],
+  has_query_affinity:["missing_flag","LOW","LOW","NO","keep"],
+  is_cheapest:["listwise_within_query","LOW","LOW","NO","keep"],
+  has_historical_price:["missing_flag","LOW","LOW","NO","keep"],
+  is_best_review:["listwise_within_query","LOW","LOW","NO","keep"],
+  has_distance:["missing_flag","LOW","LOW","NO","keep"],
+  is_most_expensive:["listwise_within_query","LOW","LOW","NO","keep"],
+  has_visitor_history:["missing_flag","LOW","LOW","NO","keep"],
+};
+
+const IMP = [
+  {f:"prop_location_score2",g:1892596,s:3734},{f:"prop_dest_book_rate",g:1043376,s:3667},
+  {f:"location2_rank_norm",g:863905,s:2903},{f:"prop_click_rate",g:784236,s:2733},
+  {f:"price_vs_prop_mean",g:732816,s:2970},{f:"prop_price_zscore",g:633574,s:2922},
+  {f:"prop_avg_position",g:542838,s:3939},{f:"location2_rank",g:513592,s:1754},
+  {f:"value_score_rank",g:483175,s:1698},{f:"price_ratio_to_hist",g:480834,s:4009},
+  {f:"prop_rel_rate",g:356168,s:2131},{f:"price_z_score",g:353154,s:2609},
+  {f:"loc2_vs_mean",g:348210,s:3101},{f:"price_diff_from_hist",g:329318,s:3411},
+  {f:"prop_site_book_rate",g:308433,s:3174},{f:"price_rank",g:301929,s:1360},
+  {f:"price_vs_median",g:293567,s:2277},{f:"dest_count",g:291649,s:2685},
+  {f:"prop_location_score1",g:260048,s:2457},{f:"value_score_rank_norm",g:239875,s:2103},
+  {f:"loc1_vs_mean",g:235380,s:2882},{f:"price_vs_mean",g:234803,s:1971},
+  {f:"promo_x_cheap",g:219790,s:1394},{f:"review_vs_mean",g:213408,s:2345},
+  {f:"location_total",g:212881,s:2254},{f:"query_hotel_count",g:201530,s:1397},
+  {f:"review_percentile",g:193720,s:2233},{f:"prop_count",g:192784,s:2514},
+  {f:"orig_destination_distance",g:184841,s:2726},{f:"log_price_z_score",g:183773,s:1833},
+  {f:"prop_std_price",g:183537,s:2451},{f:"prop_click_count",g:176951,s:1593},
+  {f:"prop_book_rate",g:166537,s:2152},{f:"price_vs_dest_mean",g:166168,s:2045},
+  {f:"price_per_night_per_star",g:166072,s:2218},{f:"query_star_mean",g:165032,s:2131},
+  {f:"prop_mean_price",g:159915,s:2040},{f:"price_per_night",g:157321,s:2127},
+  {f:"price_vs_max",g:152536,s:2116},{f:"dest_click_rate",g:149735,s:2143},
+  {f:"price_per_guest",g:148552,s:2216},{f:"quality_rank_avg",g:147015,s:2148},
+  {f:"prop_book_given_click",g:145803,s:2222},{f:"srch_booking_window",g:142078,s:2001},
+  {f:"price_percentile",g:140870,s:1555},{f:"total_cost",g:140543,s:2100},
+  {f:"review_vs_dest_mean",g:138009,s:1901},{f:"price_to_min_ratio",g:137770,s:1897},
+  {f:"dest_mean_star",g:136906,s:1849},{f:"review_rank_norm",g:127862,s:1657},
+  {f:"dest_mean_price",g:127804,s:1795},{f:"dest_book_rate",g:126241,s:1902},
+  {f:"location_total_rank_norm",g:123101,s:1817},{f:"dest_mean_review",g:121857,s:1788},
+  {f:"star_vs_mean",g:120242,s:1557},{f:"location1_rank_norm",g:118644,s:1812},
+  {f:"price_per_star",g:118381,s:1664},{f:"review_rank",g:118345,s:1193},
+  {f:"value_score",g:116926,s:1672},{f:"query_price_std",g:116423,s:1716},
+  {f:"prop_log_historical_price",g:114559,s:1611},{f:"price_per_person",g:113973,s:1810},
+  {f:"star_vs_dest_mean",g:113718,s:1657},{f:"site_book_rate",g:112431,s:1597},
+  {f:"star_percentile",g:111141,s:1371},{f:"srch_destination_id",g:108804,s:1761},
+  {f:"starrating_rank_norm",g:106655,s:1427},{f:"site_dest_book_rate",g:106129,s:1678},
+  {f:"comp_advantage_rank_norm",g:105602,s:1695},{f:"value_gap",g:105472,s:1605},
+  {f:"query_price_mean",g:105238,s:1514},{f:"price_vs_min",g:100179,s:1398},
+  {f:"srch_query_affinity_score",g:95657,s:1081},{f:"comp_rate_pct_mean",g:95252,s:1526},
+  {f:"price_rank_norm",g:90541,s:1144},{f:"log_distance",g:89547,s:1323},
+  {f:"country_book_rate",g:89214,s:1219},{f:"site_country_book_rate",g:86695,s:1321},
+  {f:"price_usd",g:84672,s:1220},{f:"price_per_room",g:83888,s:1221},
+  {f:"price_ratio_to_visitor_hist",g:83355,s:874},{f:"log_prop_count",g:83210,s:1131},
+  {f:"comp_rate_pct_max",g:81286,s:1252},{f:"cpair_book_rate",g:77454,s:1209},
+  {f:"query_affinity_exp",g:75570,s:933},{f:"hour",g:74915,s:1226},
+  {f:"comp_rate_pct_min",g:67705,s:1069},{f:"location_total_rank",g:63424,s:945},
+  {f:"comp_advantage_rank",g:62295,s:916},{f:"price_diff_from_visitor_hist",g:62235,s:743},
+  {f:"location1_rank",g:58816,s:905},{f:"starrating_rank",g:57482,s:761},
+  {f:"star_review_product",g:56055,s:528},{f:"abs_star_diff",g:53202,s:667},
+  {f:"visitor_hist_adr_usd",g:51290,s:627},{f:"prop_review_score",g:46700,s:387},
+  {f:"distance_x_international",g:46614,s:676},{f:"visitor_location_country_id",g:46281,s:726},
+  {f:"star_diff",g:41404,s:544},{f:"prop_country_id",g:40672,s:564},
+  {f:"site_id",g:39822,s:584},{f:"star_x_brand",g:38136,s:378},
+  {f:"visitor_hist_starrating",g:35348,s:449},{f:"month",g:33395,s:548},
+  {f:"prop_starrating",g:31874,s:112},{f:"dayofweek",g:28477,s:496},
+  {f:"log_price",g:28475,s:427},{f:"promotion_flag",g:28463,s:156},
+  {f:"srch_length_of_stay",g:26051,s:377},{f:"comp_inv_count",g:23008,s:349},
+  {f:"comp_rate_count",g:22194,s:348},{f:"total_guests",g:21963,s:336},
+  {f:"prop_brand_bool",g:21139,s:161},{f:"srch_adults_count",g:20777,s:305},
+  {f:"srch_children_count",g:19823,s:284},{f:"comp_rate_sum",g:18104,s:296},
+  {f:"has_location_score2",g:15608,s:16},{f:"is_domestic",g:15336,s:161},
+  {f:"n_best_flags",g:10769,s:134},{f:"is_overpriced",g:10148,s:49},
+  {f:"comp_more_expensive_count",g:9419,s:148},{f:"comp_rate_advantage",g:9206,s:144},
+  {f:"is_last_minute",g:8086,s:97},{f:"comp_no_inv_count",g:8081,s:139},
+  {f:"comp_cheaper_count",g:7149,s:123},{f:"srch_room_count",g:5413,s:84},
+  {f:"is_family",g:4529,s:61},{f:"is_discounted",g:3739,s:21},
+  {f:"is_long_window",g:2879,s:45},{f:"is_short_window",g:2415,s:42},
+  {f:"review_is_zero",g:2337,s:24},{f:"is_weekend_search",g:1775,s:31},
+  {f:"is_best_location1",g:1275,s:22},{f:"is_best_star",g:1103,s:10},
+  {f:"starrating_is_zero",g:824,s:9},{f:"srch_saturday_night_bool",g:761,s:12},
+  {f:"has_query_affinity",g:508,s:7},{f:"is_cheapest",g:360,s:6},
+  {f:"has_historical_price",g:349,s:5},{f:"is_best_review",g:246,s:3},
+  {f:"has_distance",g:157,s:2},{f:"is_most_expensive",g:151,s:3},
+  {f:"has_visitor_history",g:0,s:0},
+];
+
+const GC = {
+  raw:'#60a5fa',listwise_within_query:'#34d399',hotel_agg_TE_single:'#a78bfa',
+  hotel_agg_TE_cross:'#f87171',price:'#fbbf24',hotel_agg_price_stat:'#22d3ee',
+  hotel_agg_position:'#fb2c36',hotel_agg_count:'#a3e635',quality:'#fb923c',
+  interaction:'#e879f9',competitor:'#67e8f9',temporal:'#facc15',visitor:'#86efac',
+  hotel_agg_dest_stat:'#38bdf8',missing_flag:'#94a3b8',hotel_agg_TE_count:'#c4b5fd',
+  hotel_agg_TE_book_given_click:'#fdba74',
+};
+
+/* ── CHART DEFAULTS ───────────────────────────────────────────────────── */
+Chart.defaults.color='#6b7594';
+Chart.defaults.borderColor='#252a45';
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size=12;
+
+/* ── HELPERS ──────────────────────────────────────────────────────────── */
+const fK=v=>v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(v);
+const f4=v=>v!=null?v.toFixed(4):'—';
+
+function delta(d){
+  if(d==null)return'<span class="neu">—</span>';
+  if(Math.abs(d)<0.000005)return'<span class="neu">≈ 0</span>';
+  const s=d>0?'+':'';
+  return`<span class="${d>0?'pos':'neg'}">${s}${d.toFixed(4)}</span>`;
+}
+function keptB(k){
+  const m={YES:['bg','YES'],NO:['br','NO'],ANCHOR:['bp','ANCHOR']};
+  const[c,l]=m[k]||['bx',k];
+  return`<span class="badge ${c}">${l}</span>`;
+}
+function statusB(t){
+  const m={baseline:['ba','Baseline'],valid:['bg','Valid P2'],anchor:['bp','Anchor'],submit:['bb','Submitted'],invalid:['br','Invalid']};
+  const[c,l]=m[t]||['bx',t];
+  return`<span class="badge ${c}">${l}</span>`;
+}
+function decB(d){
+  if(d==='keep')return'<span class="badge bg">keep</span>';
+  if(d==='TEST_DROP')return'<span class="badge br">drop?</span>';
+  return'<span class="badge ba">smooth?</span>';
+}
+function riskS(r){const c={HIGH:'rh',MED:'rm',LOW:'rl',NONE:'rn'}[r]||'';return`<span class="${c}">${r}</span>`;}
+function grpB(g){const col=GC[g]||'#6b7594';return`<span class="badge" style="background:${col}22;color:${col}">${g.replace(/_/g,' ')}</span>`;}
+
+/* ── GAP CHART ────────────────────────────────────────────────────────── */
+new Chart(document.getElementById('gapChart'),{
+  type:'bar',
+  data:{
+    labels:['V4 Ensemble','v4.2 Single (P2 winner)'],
+    datasets:[
+      {label:'Local NDCG@5',data:[0.42512,0.42258],backgroundColor:'rgba(34,197,94,.7)',borderRadius:5},
+      {label:'Kaggle NDCG@5',data:[0.42021,0.41639],backgroundColor:'rgba(239,68,68,.7)',borderRadius:5},
+    ]
+  },
+  options:{
+    plugins:{legend:{labels:{boxWidth:12,padding:14}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw.toFixed(5)}`}}},
+    scales:{
+      y:{min:0.410,max:0.430,grid:{color:'#1c2035'},ticks:{callback:v=>v.toFixed(3)}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+/* ── SWEEP CHART ──────────────────────────────────────────────────────── */
+const SMETA={
+  ndcg:{key:'ndcg',lbl:'NDCG@5',       anc:0.4219149237443544,    min:0.4182,max:0.4230,dp:6},
+  r1:  {key:'r1',  lbl:'Recall@1',     anc:0.25197022767075306,   min:0.246, max:0.258, dp:4},
+  r5:  {key:'r5',  lbl:'Recall@5',     anc:0.6407618213660246,    min:0.635, max:0.644, dp:4},
+  mbr: {key:'mbr', lbl:'Mean Rank (↓)',anc:5.974168,              min:5.92,  max:6.05,  dp:3},
+};
+
+let sweepInst=null, curMet='ndcg';
+
+function buildSweep(){
+  const m=SMETA[curMet];
+
+  // compute winner/runner/worst dynamically for the active metric
+  const nonAnc=SWEEP.filter(r=>r.type!=='anchor');
+  const sorted=[...nonAnc].sort((a,b)=>m.key==='mbr'?a[m.key]-b[m.key]:b[m.key]-a[m.key]);
+  const winner=sorted[0], runner=sorted[1], worst=sorted[sorted.length-1];
+  function barColor(r){
+    if(r.type==='anchor')return'rgba(168,85,247,.75)';
+    if(r===winner)return'rgba(34,197,94,.85)';
+    if(r===runner)return'rgba(59,130,246,.8)';
+    if(r===worst)return'rgba(239,68,68,.6)';
+    return'rgba(99,102,241,.6)';
+  }
+
+  const anchorPlugin={id:'al',afterDraw(ch){
+    const{ctx,chartArea:{left,right},scales:{y}}=ch;
+    const py=y.getPixelForValue(m.anc);
+    ctx.save();ctx.strokeStyle='rgba(168,85,247,.4)';ctx.setLineDash([5,3]);ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();
+    ctx.fillStyle='rgba(168,85,247,.65)';ctx.font='10px system-ui';
+    ctx.fillText('anchor',right-42,py-4);ctx.restore();
+  }};
+  if(sweepInst)sweepInst.destroy();
+  sweepInst=new Chart(document.getElementById('sweepChart'),{
+    type:'bar',plugins:[anchorPlugin],
+    data:{
+      labels:SWEEP.map(r=>r.lbl),
+      datasets:[{label:m.lbl,data:SWEEP.map(r=>r[m.key]),backgroundColor:SWEEP.map(r=>barColor(r)),borderRadius:5}]
+    },
+    options:{
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${m.lbl}: ${c.raw.toFixed(m.dp)}`}}},
+      scales:{
+        y:{min:m.min,max:m.max,grid:{color:'#1c2035'},ticks:{callback:v=>v.toFixed(m.dp===6?4:m.dp)}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+buildSweep();
+
+function setMetric(m,btn){
+  curMet=m;
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildSweep();
+}
+
+/* ── SWEEP TABLE ──────────────────────────────────────────────────────── */
+document.getElementById('sweep-tbody').innerHTML=SWEEP.map(r=>{
+  const dN=r.type==='anchor'?null:r.ndcg-ANCHOR;
+  const rc={winner:'tr-w',runner:'tr-r',anchor:'tr-a',worst:'tr-i'}[r.type]||'';
+  const sb=r.type==='winner'?'<span class="badge bg">★ Winner</span>'
+    :r.type==='runner'?'<span class="badge bb">Runner-up</span>'
+    :r.type==='anchor'?'<span class="badge bp">Anchor</span>'
+    :r.type==='worst'?'<span class="badge br">Weakest</span>'
+    :'<span class="badge bx">—</span>';
+  return`<tr class="${rc}">
+    <td class="mono">${r.lbl}</td><td class="mono">${r.iter}</td>
+    <td class="mono">${r.ndcg.toFixed(6)}</td><td class="mono">${r.r1.toFixed(6)}</td>
+    <td class="mono">${r.r5.toFixed(6)}</td><td class="mono">${r.mbr.toFixed(3)}</td>
+    <td class="mono">${delta(dN)}</td><td>${sb}</td>
+  </tr>`;
+}).join('');
+
+/* ── FEATURE BAR CHART ────────────────────────────────────────────────── */
+const top25=IMP.slice(0,25);
+new Chart(document.getElementById('featChart'),{
+  type:'bar',indexAxis:'y',
+  data:{
+    labels:top25.map(f=>f.f),
+    datasets:[{
+      label:'Importance Gain',
+      data:top25.map(f=>f.g),
+      backgroundColor:top25.map(f=>(GC[(AUDIT[f.f]||[''])[0]]||'#6366f1')+'cc'),
+      borderRadius:4,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{
+      const a=AUDIT[top25[c.dataIndex].f]||[];
+      return[` Gain: ${fK(c.raw)}`,` Group: ${(a[0]||'').replace(/_/g,' ')}`,` Decision: ${a[4]||'—'}`];
+    }}}},
+    scales:{
+      x:{grid:{color:'#1c2035'},ticks:{callback:v=>fK(v)}},
+      y:{grid:{display:false},ticks:{font:{size:11}}}
+    }
+  }
+});
+
+/* ── GROUP DONUT ──────────────────────────────────────────────────────── */
+const gc={};
+IMP.forEach(f=>{const g=(AUDIT[f.f]||['unknown'])[0];gc[g]=(gc[g]||0)+1;});
+const sg=Object.entries(gc).sort((a,b)=>b[1]-a[1]);
+new Chart(document.getElementById('groupChart'),{
+  type:'doughnut',
+  data:{
+    labels:sg.map(([g])=>g.replace(/_/g,' ')),
+    datasets:[{data:sg.map(([,c])=>c),backgroundColor:sg.map(([g])=>(GC[g]||'#6366f1')+'cc'),borderColor:'#141728',borderWidth:2}]
+  },
+  options:{plugins:{legend:{position:'right',labels:{font:{size:10},padding:7,boxWidth:11}}}}
+});
+
+/* ── FEATURE TABLE ────────────────────────────────────────────────────── */
+let fFilt='all';
+const maxG=IMP[0].g;
+
+function renderFeat(){
+  const q=document.getElementById('fsearch').value.toLowerCase();
+  const rows=IMP.filter(f=>{
+    const a=AUDIT[f.f]||[];
+    if(fFilt!=='all'&&(a[4]||'keep')!==fFilt)return false;
+    if(q&&!f.f.toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('feat-tbody').innerHTML=rows.map((f,i)=>{
+    const a=AUDIT[f.f]||['?','?','?','?','keep'];
+    const col=GC[a[0]]||'#6366f1';
+    const pct=(f.g/maxG*100).toFixed(1);
+    return`<tr>
+      <td class="neu mono" style="font-size:11px">${i+1}</td>
+      <td class="mono" style="font-size:12px">${f.f}</td>
+      <td>${grpB(a[0])}</td>
+      <td class="mono">${fK(f.g)}</td>
+      <td><div class="gb-wrap"><div class="gb-bg"><div class="gb-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:10px;color:var(--muted);width:34px">${pct}%</span></div></td>
+      <td>${riskS(a[1])}</td><td>${riskS(a[2])}</td>
+      <td style="color:${a[3]==='YES'?'var(--amber)':'var(--muted)'}">${a[3]}</td>
+      <td>${decB(a[4])}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('[data-ff]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-ff]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');fFilt=b.dataset.ff;renderFeat();
+  });
+});
+renderFeat();
+
+/* ── LOG TABLE ────────────────────────────────────────────────────────── */
+let lFilt='all';
+
+function renderLog(){
+  const rows=EXPS.filter(e=>lFilt==='all'||e.t===lFilt);
+  const rc={baseline:'tr-b',submit:'tr-a',invalid:'tr-i'};
+  document.getElementById('log-tbody').innerHTML=rows.map(e=>`<tr class="${rc[e.t]||''}">
+    <td><span class="badge bx">${e.ph}</span></td>
+    <td class="mono" style="font-size:12px">${e.id}</td>
+    <td style="color:var(--muted);font-size:12px">${e.cfg}</td>
+    <td class="mono">${f4(e.loc)}</td>
+    <td class="mono">${e.kag!=null?f4(e.kag):'<span class="neu">—</span>'}</td>
+    <td class="mono">${delta(e.d)}</td>
+    <td>${keptB(e.kept)}</td>
+    <td>${statusB(e.t)}</td>
+  </tr>`).join('');
+}
+
+document.querySelectorAll('[data-lf]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-lf]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');lFilt=b.dataset.lf;renderLog();
+  });
+});
+renderLog();
+
+/* ── TAB SWITCHING ────────────────────────────────────────────────────── */
+function showTab(n,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
