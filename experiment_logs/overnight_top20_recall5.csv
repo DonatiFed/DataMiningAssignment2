@@ -1,0 +1,21 @@
+config_id,description,ndcg5,recall5,mean_booked_rank,best_iter,label_gain,objective,boosting,weighting,feat_filter,row_filter,seed,n_features,kept
+F13,"positive queries only, lg=0/3/15",0.4225321567469929,0.6422942206654991,5.968622300058377,500.0,"0,3,15",lambdarank,gbdt,ipw_default,,positive_q_only,456,143,STRONG
+E4,"params={'num_leaves': 400, 'min_child_samples': 100}",0.4229054038189159,0.6420753064798599,5.947241681260945,518.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,STRONG
+E3,"params={'num_leaves': 512, 'min_child_samples': 100, 'reg_lambda': 2.0}",0.4218449069584134,0.641272621132516,5.961398131932283,551.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+E6,params={'subsample': 0.6},0.4214036543147207,0.6410537069468768,5.960814360770578,439.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+E7,params={'learning_rate': 0.02},0.4225068692440406,0.6410537069468768,5.939433741973146,821.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,STRONG
+F2,downweight all-zero queries 0.1x,0.4214036543147207,0.6410537069468768,5.960814360770578,439.0,"0,2,15",lambdarank,gbdt,down_all_zero_q,,,456,143,CANDIDATE
+E1,"params={'num_leaves': 255, 'min_child_samples': 100}",0.4220263276180668,0.6409077641564507,5.959865732632808,611.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,STRONG
+A6,"label_gain=0,3,15",0.4219782765713343,0.6409077641564507,5.965119673088149,407.0,"0,3,15",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+C3,"lg=0,2,15, seed=789",0.4209438255379801,0.6408347927612376,5.978035610040864,351.0,"0,2,15",lambdarank,gbdt,ipw_default,,,789,143,NEUTRAL
+A10,"label_gain=0,4,20",0.4204387529416504,0.6407618213660246,5.991316403969644,280.0,"0,4,20",lambdarank,gbdt,ipw_default,,,456,143,NEUTRAL
+D11,"feature_filter=drop_booking_buckets, lg=0,2,15",0.4214466832259077,0.6407618213660246,5.97343841214244,514.0,"0,2,15",lambdarank,gbdt,ipw_default,drop_booking_buckets,,456,140,CANDIDATE
+E10,params={'reg_alpha': 0.5},0.4210224847364751,0.6403969643899592,5.97438704028021,380.0,"0,2,15",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+A11,"label_gain=0,5,20",0.4210860870131338,0.6403969643899592,5.9740951546993575,344.0,"0,5,20",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+A12,"label_gain=0,1,25",0.42070474281903,0.6403969643899592,5.981684179801518,400.0,"0,1,25",lambdarank,gbdt,ipw_default,,,456,143,NEUTRAL
+A5,"label_gain=0,3,12",0.4210860870131338,0.6403969643899592,5.9740951546993575,344.0,"0,3,12",lambdarank,gbdt,ipw_default,,,456,143,CANDIDATE
+C8,"lg=0,3,15, seed=789",0.4211012295346639,0.6403239929947461,5.955268534734384,479.0,"0,3,15",lambdarank,gbdt,ipw_default,,,789,143,CANDIDATE
+I3,"GOSS boosting (gradient one-side sampling, diversity)",0.4218115217085209,0.6403239929947461,5.951984821949796,426.0,"0,2,15",lambdarank,goss,ipw_default,,,456,143,CANDIDATE
+A4,"label_gain=0,2,25",0.4207272582204425,0.64017805020432,5.9810274372446,442.0,"0,2,25",lambdarank,gbdt,ipw_default,,,456,143,NEUTRAL
+I6,"DART boosting, light drop_rate=0.05",0.4216251993909822,0.64017805020432,5.944833625218914,1500.0,"0,2,15",lambdarank,dart,ipw_default,,,456,143,CANDIDATE
+F8,random rows weight 3x,0.4216600219154528,0.64017805020432,5.979640980735551,437.0,"0,2,15",lambdarank,gbdt,rand_up_3.0,,,456,143,CANDIDATE
