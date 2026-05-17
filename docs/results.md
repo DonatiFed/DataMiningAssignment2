@@ -17,9 +17,11 @@ authoritative scoreboard.
 | V10 adversarial reweight | `submissions/submission_adv_reweight_20260517_111219.csv` | 0.41903 | −0.00118 |
 | V4.2 (Phase 2 best) | `submissions/submission_phase2_best_20260515_225726.csv` | 0.41639 | −0.00382 |
 
-★ = selected as one of two final submissions for the Kaggle private
-leaderboard. Top of the public leaderboard at submission time:
-approximately 0.46. Gap from V4: +0.04.
+★ = highest-scoring submission, used as the team's primary upload.
+Submitted as **team_80** for the
+[DMT 2026 — 2nd Assignment](https://www.kaggle.com/competitions/dmt-2026-2nd-assignment).
+Top of the public leaderboard at submission time: approximately 0.46.
+Gap from V4: +0.04.
 
 ## V6 — single-member NDCG@5 on temporal val
 

@@ -303,9 +303,10 @@ signal even with V6 backbone diluted), still below V4 by 0.00018.
 | V10 adv reweight | `submission_adv_reweight_20260517_111219.csv` | 0.41903 | −0.00118 |
 | V4.2 (Phase 2) | `submission_phase2_best_20260515_225726.csv` | 0.41639 | −0.00382 |
 
-**Final submissions selected for the Kaggle private leaderboard:**
-V4 + V9 overnight (the two highest-scoring uploads).
-**Top of public leaderboard:** approximately 0.46. Gap from V4: +0.04.
+**Submitted as team_80** for the
+[DMT 2026 — 2nd Assignment](https://www.kaggle.com/competitions/dmt-2026-2nd-assignment)
+competition. **Top of public leaderboard:** approximately 0.46. Gap from
+V4: +0.04.
 
 ---
 

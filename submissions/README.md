@@ -5,11 +5,13 @@ project. The CSVs themselves are gitignored (each is ~60 MB); this README
 documents what each one is and what it scored on the Kaggle public
 leaderboard.
 
-## Final submissions selected for the Kaggle private leaderboard
+Submitted as **team_80** for the
+[DMT 2026 — 2nd Assignment](https://www.kaggle.com/competitions/dmt-2026-2nd-assignment)
+competition.
 
-Two submissions can be selected by each Kaggle participant for the final
-private-leaderboard scoring. The two highest-scoring public submissions
-were selected:
+## Headline submissions
+
+The two highest-scoring uploads:
 
 1. **`submission_v4_20260515_151132.csv`** — V4 ensemble — Kaggle public 0.42021 ★
 2. **`submission_overnight_best_deployable_20260517_095946.csv`** — V9 overnight — Kaggle public 0.42012
@@ -29,7 +31,7 @@ were selected:
 | 9 | `submission_FINAL_safepush_v75_6div_20260517_123507.csv` | V11a | ≈ 0.4099 (estimated) | 0.41995 | `scripts/build_two_final_submissions.py` |
 | 10 | `submission_FINAL_megabag_25equal_20260517_123507.csv` | V11b | ≈ 0.4090 (estimated) | 0.42003 | `scripts/build_two_final_submissions.py` |
 
-★ = selected as final private-leaderboard submission.
+★ = highest-scoring submission, used as the team's primary upload.
 
 ## Per-submission READMEs
 

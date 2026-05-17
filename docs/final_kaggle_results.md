@@ -1,15 +1,18 @@
 # Final Kaggle scoreboard
 
-Authoritative list of every submission uploaded to Kaggle, with the
-resulting public NDCG@5 and the metadata needed to reproduce each one.
+Authoritative list of every submission uploaded to Kaggle for the
+[DMT 2026 — 2nd Assignment](https://www.kaggle.com/competitions/dmt-2026-2nd-assignment)
+competition (submitted as **team_80**), with the resulting public NDCG@5
+and the metadata needed to reproduce each one.
 
 ## Headline
 
 **Best Kaggle public NDCG@5: 0.42021 (V4 ensemble).**
 
-The two submissions selected for the Kaggle private leaderboard final
-scoring are the two highest-scoring uploads: V4 (0.42021) and V9
-overnight best deployable (0.42012).
+V4 remained the highest-scoring submission across all attempted versions.
+The two highest-scoring uploads — V4 (0.42021) and V9 overnight best
+deployable (0.42012) — were used as the team's primary submissions for
+private leaderboard scoring.
 
 ## Submission-by-submission
 
@@ -26,7 +29,7 @@ overnight best deployable (0.42012).
 | 9 | `submission_FINAL_safepush_v75_6div_20260517_123507.csv` | ≈ 0.4099 (estimated) | 0.41995 | −0.00026 | V11a SAFE-PUSH (V6 @ 0.75 + 6 diversifiers @ 0.0417 each) |
 | 10 | `submission_FINAL_megabag_25equal_20260517_123507.csv` | ≈ 0.4090 (estimated) | 0.42003 | −0.00018 | V11b MEGA-BAG (23 trained models equal rank-average) |
 
-★ = selected as one of the two final submissions for private leaderboard scoring.
+★ = highest-scoring submission, used as the team's primary upload.
 
 ## Ranked by Kaggle public score
 
