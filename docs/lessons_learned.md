@@ -1,4 +1,4 @@
-# Lessons learned
+# Insights
 
 Methodological and technical takeaways from this project. Each lesson is
 documented with the evidence that produced it.
