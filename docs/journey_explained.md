@@ -16,16 +16,92 @@ per-version template so you can scan the journey at any depth.
 
 ## Table of contents
 
-- **Part 1** — The competition: what's being predicted, the data, the metric
-- **Part 2** — The conceptual toolkit: every technique explained from zero
-- **Part 3** — The journey, version by version, in full detail (V3 → V11)
-- **Part 4** — The lessons, in plain language
-- **Part 5** — Where to go from here
-- **Part 6** — Glossary
+### [Part 1 · The competition](#part-1)
+What's being predicted, the data, the metric.
+
+- [1.1 The problem in one paragraph](#s-1-1)
+- [1.2 The data](#s-1-2)
+- [1.3 The metric: NDCG@5](#s-1-3)
+
+### [Part 2 · The conceptual toolkit](#part-2)
+Every technique used in the project, explained from zero. Cross-referenced from
+the "Concepts used" subsection of each version in Part 3.
+
+- [2.1 Learning to rank vs classification vs regression](#s-2-1)
+- [2.2 Pointwise vs pairwise vs listwise](#s-2-2)
+- [2.3 Features and feature engineering](#s-2-3)
+- [2.4 Within-query rank features](#s-2-4)
+- [2.5 Target encoding (TE)](#s-2-5)
+- [2.6 Out-of-fold (OOF) computation](#s-2-6)
+- [2.7 Position bias and IPW](#s-2-7)
+- [2.8 Gradient boosting (GBDT) — LightGBM, CatBoost, XGBoost](#s-2-8)
+- [2.9 Bin sampling, seeds, and reproducibility](#s-2-9)
+- [2.10 LambdaRank — V4's workhorse objective](#s-2-10)
+- [2.11 Alternative ranking objectives](#s-2-11)
+- [2.12 Validation strategies](#s-2-12)
+- [2.13 Ensembling](#s-2-13)
+- [2.14 Train/test drift and adversarial validation](#s-2-14)
+- [2.15 Smoothing in target encoding](#s-2-15)
+
+### [Part 3 · The journey, version by version](#part-3)
+Each version follows the same template: status, hypothesis, concepts used,
+implementation, configuration, results, why it worked/didn't, what it taught.
+
+- [Summary table](#summary-table)
+- [V3 — the baseline](#v3)
+- [V4 — the production peak ★ (Kaggle 0.42021)](#v4)
+- [V4.2 — anchor-violation submission](#v4-2)
+- [V5 — cross-key TEs (regression)](#v5)
+- [V5.2 — cross-key TE ablation](#v5-2)
+- [V6 — temporal validation, LOO-9](#v6)
+- [V7 — failure-pattern features](#v7)
+- [V8 — structural diversity (first ensemble lift)](#v8)
+- [V9 — overnight batch](#v9)
+- [V10 — adversarial reweighting (regression)](#v10)
+- [V11 — final two submissions](#v11)
+
+### [Part 4 · The lessons (in plain language)](#part-4)
+Transferable insights from the journey.
+
+- [L1: Local val and Kaggle test are different objectives under drift](#l1)
+- [L2: Temporal val is stricter but not necessarily closer to Kaggle](#l2)
+- [L3: Drift absorbs most of your local gains](#l3)
+- [L4: Sample reweighting cannot fix structural drift](#l4)
+- [L5: Objective diversity > hyperparameter diversity for ensembles](#l5)
+- [L6: Strong backbone + small-weight diversifiers > equal-weight bagging](#l6)
+- [L7: In-model feature stacking has a ceiling](#l7)
+- [L8: Fault-tolerant pipelines pay for themselves](#l8)
+- [L9: Submission format is easy to get wrong](#l9)
+- [L10: Anchor invariants catch silent regressions](#l10)
+
+### [Part 5 · Where to go from here](#part-5)
+Highest-leverage unattempted moves, with cost and expected lift estimates.
+
+- [5.1 `random_bool=1`-derived features (highest single-move EV)](#s-5-1)
+- [5.2 Verify the test set's date distribution](#s-5-2)
+- [5.3 Within-srch_id rank features (cheap, drift-immune)](#s-5-3)
+- [5.4 `comp1`–`comp8` engineered properly](#s-5-4)
+- [5.5 Stacking instead of rank-averaging](#s-5-5)
+- [5.6 PyTorch listwise neural ranker](#s-5-6)
+- [5.7 What NOT to do](#s-5-7)
+- [5.8 Honest projection](#s-5-8)
+
+### [Part 6 · Glossary](#part-6)
+Quick-reference dictionary of every term, with links back to the toolkit
+section that explains it.
+
+> **Tip:** every `§N.M` reference inside the document is a clickable
+> link back to the relevant toolkit section. The "Concepts used" list at
+> the head of each version in Part 3 lets you jump directly to the
+> explanation of any technique that version relies on.
 
 ---
 
+<a id="part-1"></a>
+
 # Part 1 · The competition
+
+<a id="s-1-1"></a>
 
 ## 1.1 The problem in one paragraph
 
@@ -40,6 +116,8 @@ time, what is the best order to display these properties?**
 "Best" = the booked hotel should be at rank 1, the clicked-but-not-booked
 hotels should rank high, the ignored hotels low. The scoring metric
 (NDCG@5) heavily rewards getting the booking into the top 5.
+
+<a id="s-1-2"></a>
 
 ## 1.2 The data
 
@@ -89,6 +167,8 @@ relative price for this property (-1 = competitor cheaper, 0 = same,
 `test.csv` has the same columns **except** no `click_bool`, no
 `booking_bool`, no `position`. That's the hidden truth you have to
 predict.
+
+<a id="s-1-3"></a>
 
 ## 1.3 The metric: NDCG@5
 
@@ -162,11 +242,15 @@ measurable improvement; +0.005 is a structural win.
 
 ---
 
+<a id="part-2"></a>
+
 # Part 2 · The conceptual toolkit
 
 This is the dictionary of techniques. Every concept used in the
 project is explained here, from zero. Skim it on first pass, return
 later when Part 3 references something you don't remember.
+
+<a id="s-2-1"></a>
 
 ## 2.1 Learning to rank (LTR) vs classification vs regression
 
@@ -185,6 +269,8 @@ rows sharing a `srch_id`), not individual rows. The loss is computed
 per-group. This is why LightGBM/CatBoost have ranking modes — they
 need group boundaries.
 
+<a id="s-2-2"></a>
+
 ## 2.2 Pointwise vs pairwise vs listwise
 
 Three approaches to LTR:
@@ -194,14 +280,16 @@ Three approaches to LTR:
   Cheap, often weak baseline.
 - **Pairwise:** for each pair (item_i, item_j) within a search,
   train the model to predict score_i > score_j when i is more
-  relevant. LambdaRank (§2.8) is the famous pairwise approach.
+  relevant. LambdaRank ([§2.8](#s-2-8)) is the famous pairwise approach.
 - **Listwise:** the loss considers the entire ranked list per
   search. Optimizes a ranking metric directly or via surrogate.
-  Examples: `rank_xendcg` (§2.9), YetiRank (§2.9), ListNet.
+  Examples: `rank_xendcg` ([§2.9](#s-2-9)), YetiRank ([§2.9](#s-2-9)), ListNet.
 
 This project: V4 used LambdaRank (pairwise). V8 added xendcg
 (listwise), discovered it was the largest ensemble lift because it
 makes ranking mistakes DIFFERENT from LambdaRank.
+
+<a id="s-2-3"></a>
 
 ## 2.3 Features and feature engineering
 
@@ -215,7 +303,7 @@ by deriving:
 - **Interactions:** "this property's price ÷ its destination's
   median price."
 - **Within-query ranks:** "is this property the cheapest in this
-  search? Rank in the middle?" (§2.4)
+  search? Rank in the middle?" ([§2.4](#s-2-4))
 - **Time-derived:** day of week, month, seasonality.
 - **History differences:** "how much higher than this user's
   historical avg is this property's star rating?"
@@ -227,6 +315,8 @@ they're given.
 This project's strategic weakness: the 143-feature pipeline was
 built for V4 and **almost no new features were added in V5–V11**.
 Versions V5–V11 mostly varied models and ensembles, not features.
+
+<a id="s-2-4"></a>
 
 ## 2.4 Within-query rank features
 
@@ -246,6 +336,8 @@ relative structures.
 
 V4 has some of these (price, star, review rank). A from-scratch
 redesign would build them aggressively for every continuous feature.
+
+<a id="s-2-5"></a>
 
 ## 2.5 Target encoding (TE)
 
@@ -268,7 +360,7 @@ column.
 the SAME rows you train on, the TE for row R was partially computed
 from R's own label. The model can effectively "look up" the answer
 for R, which works perfectly in training and fails in test. The fix
-is out-of-fold computation (§2.6).
+is out-of-fold computation ([§2.6](#s-2-6)).
 
 **Why it's dangerous EVEN WITH the OOF fix — drift:** TE values
 encode properties of the training data. If the test set has
@@ -293,6 +385,8 @@ much more drift-prone in practice because:
 V5 added 4 cross-key TEs. They were the cause of V5's Kaggle
 regression.
 
+<a id="s-2-6"></a>
+
 ## 2.6 Out-of-fold (OOF) computation
 
 The standard fix for target leakage in TE.
@@ -313,6 +407,8 @@ All TE features in this project use OOF. The V4 pipeline does this
 correctly in `src/features.py`. This is baseline competence; getting
 OOF wrong is the most common "I scored great in training and
 terrible in test" failure mode in competition ML.
+
+<a id="s-2-7"></a>
 
 ## 2.7 Position bias and inverse propensity weighting (IPW)
 
@@ -345,6 +441,8 @@ call. It's part of why V4 hits 0.42.
 channel only. Other biases pass through. And the propensity
 estimate is itself imperfect.
 
+<a id="s-2-8"></a>
+
 ## 2.8 Gradient boosting (GBDT) — LightGBM, CatBoost, XGBoost
 
 The model family this project leans on most.
@@ -364,7 +462,7 @@ The "gradient" comes from how errors are computed: each new tree
 fits the negative gradient of the loss with respect to current
 predictions. For regression with squared loss, that's just the
 residual. For LambdaRank, it's a specific quantity called lambda
-(§2.10).
+([§2.10](#s-2-10)).
 
 ### Important GBDT hyperparameters
 - **`learning_rate`** — how much each new tree shifts the
@@ -396,6 +494,8 @@ Three production GBDT libraries:
   CatBoost handle infinite values; XGBoost requires explicit
   `missing=np.nan` or pre-cleaning).
 
+<a id="s-2-9"></a>
+
 ## 2.9 Bin sampling, seeds, and reproducibility
 
 LightGBM converts continuous features into discrete histograms (bins)
@@ -426,6 +526,8 @@ correct V4 base.
 (seeds, bagging, dropout, init). Reproducibility requires tracking
 *all* sources. A subtle bug like the bin-sampling one can silently
 degrade scores without crashing anything.
+
+<a id="s-2-10"></a>
 
 ## 2.10 LambdaRank — V4's workhorse objective
 
@@ -470,6 +572,8 @@ In retrospect (V8 evidence): this is a *weak* form of diversity
 because all members share the LambdaRank loss formulation. Switching
 to a different objective gives much more ensemble lift.
 
+<a id="s-2-11"></a>
+
 ## 2.11 Alternative ranking objectives
 
 ### `rank_xendcg` (LightGBM listwise)
@@ -492,12 +596,14 @@ ensembles.
 Predict `click_bool` or `booking_bool` directly with a standard
 binary classification loss (logistic). Treats each row independently.
 V6 originally had a binary classifier as ensemble member; LOO
-trimming (§2.13) showed it was harmful and dropped it.
+trimming ([§2.13](#s-2-13)) showed it was harmful and dropped it.
 
 ### NN listwise (ListNet, approxNDCG)
 Not attempted in this project. Standard for neural ranking. Different
 inductive bias from GBDTs → real diversity. The highest-leverage
-unattempted move (§5).
+unattempted move ([Part 5](#part-5)).
+
+<a id="s-2-12"></a>
 
 ## 2.12 Validation strategies
 
@@ -544,6 +650,8 @@ Temporal val UNDERESTIMATED Kaggle by ~0.011.
 Neither perfectly matches Kaggle. The right answer is probably:
 **track both, treat disagreement as the drift signal**. The project
 picked one (temporal from V6 onward) and may have over-corrected.
+
+<a id="s-2-13"></a>
 
 ## 2.13 Ensembling
 
@@ -604,6 +712,8 @@ rank-averaging by +0.002–0.005.
 V11 MEGA-BAG was equal-weight rank-average over 23 models. A
 stacked meta-learner over the same 23 would likely have beaten it.
 
+<a id="s-2-14"></a>
+
 ## 2.14 Train/test drift and adversarial validation
 
 The single most important diagnostic concept in this project.
@@ -648,6 +758,8 @@ A feature is "clean drift" if **|μ_train − μ_test| / σ_train <
 failing these gates were rejected in V6+. The CP and DS features
 (V6 additions) were designed with these thresholds in mind.
 
+<a id="s-2-15"></a>
+
 ## 2.15 Smoothing in target encoding
 
 For small categories (few rows), the raw TE statistic has high
@@ -673,6 +785,8 @@ TE.
 
 ---
 
+<a id="part-3"></a>
+
 # Part 3 · The journey, version by version
 
 Each version below follows the same template:
@@ -687,6 +801,8 @@ Each version below follows the same template:
 > **Why it worked / didn't** — mechanistic explanation
 > **What this version taught** — the transferable lesson
 > **Bridge to the next version** — what informed the next move
+
+<a id="summary-table"></a>
 
 ### Summary table (read this first)
 
@@ -707,6 +823,8 @@ Each version below follows the same template:
 
 ---
 
+<a id="v3"></a>
+
 ## V3 — the baseline
 
 ### Status
@@ -719,20 +837,20 @@ Each version below follows the same template:
 pipeline achieve a competitive score?"
 
 ### Concepts used
-1. **LightGBM** (§2.8) — the GBDT library
-2. **LambdaRank** (§2.10) — the ranking objective with
+1. **LightGBM** ([§2.8](#s-2-8)) — the GBDT library
+2. **LambdaRank** ([§2.10](#s-2-10)) — the ranking objective with
    NDCG-weighted pairwise gradients
-3. **`label_gain="0,1,15"`** (§2.10) — relevance-to-gain mapping
+3. **`label_gain="0,1,15"`** ([§2.10](#s-2-10)) — relevance-to-gain mapping
    that puts heavy weight on bookings (gain 15) over clicks (gain 1)
-4. **Inverse propensity weighting (IPW)** (§2.7) — row weights to
+4. **Inverse propensity weighting (IPW)** ([§2.7](#s-2-7)) — row weights to
    correct for position bias
-5. **Target encoding** (§2.5) — `prop_id` and `srch_destination_id`
+5. **Target encoding** ([§2.5](#s-2-5)) — `prop_id` and `srch_destination_id`
    replaced with their average booking/click rates
-6. **Out-of-fold (OOF) computation** (§2.6) — 5-fold OOF to prevent
+6. **Out-of-fold (OOF) computation** ([§2.6](#s-2-6)) — 5-fold OOF to prevent
    target leakage in TE
-7. **Within-query rank features** (§2.4) — price rank, star rank,
+7. **Within-query rank features** ([§2.4](#s-2-4)) — price rank, star rank,
    review rank, distance rank within each `srch_id`
-8. **Random validation** (§2.12) — held-out 20% random sample
+8. **Random validation** ([§2.12](#s-2-12)) — held-out 20% random sample
 
 ### Implementation
 A single LightGBM LambdaRank model trained on a 143-feature
@@ -787,6 +905,8 @@ LambdaRank configurations to cancel individual model noise.
 
 ---
 
+<a id="v4"></a>
+
 ## V4 — the production peak (Kaggle 0.42021) ★
 
 ### Status
@@ -805,13 +925,13 @@ yield a more robust ranking than any single model."
 
 ### Concepts used
 1. **All of V3's concepts** (V4 inherits V3's pipeline)
-2. **Multi-configuration ensemble** (§2.13) — several models, each
+2. **Multi-configuration ensemble** ([§2.13](#s-2-13)) — several models, each
    with different hyperparameters, rank-averaged
-3. **`label_gain` sweep** (§2.10) — the diversity mechanism: vary
+3. **`label_gain` sweep** ([§2.10](#s-2-10)) — the diversity mechanism: vary
    the relevance-to-gain mapping across ensemble members
-4. **Bin sampling in LightGBM** (§2.9) — and the reproducibility
+4. **Bin sampling in LightGBM** ([§2.9](#s-2-9)) — and the reproducibility
    bug it caused
-5. **Anchor invariant** (§2.9) — the
+5. **Anchor invariant** ([§2.9](#s-2-9)) — the
    `phase2_anchor_check.py` test that pipelines must pass to prove
    V4 is reproducible
 
@@ -903,6 +1023,8 @@ score. Add cross-key TEs.
 
 ---
 
+<a id="v4-2"></a>
+
 ## V4.2 / Phase 2 best — the anchor-violation submission
 
 ### Status
@@ -931,6 +1053,8 @@ model 0.42258 → 0.41639). That's a big drop for what looks like a
 
 ---
 
+<a id="v5"></a>
+
 ## V5 — cross-key target encodings (Kaggle 0.41943, regression)
 
 ### Status
@@ -948,11 +1072,11 @@ score."
 
 ### Concepts used
 1. **All of V4's concepts**
-2. **Cross-key target encoding** (§2.5) — TE over the combination
+2. **Cross-key target encoding** ([§2.5](#s-2-5)) — TE over the combination
    of two categorical IDs
-3. **Adversarial validation** (§2.14) — the diagnostic that
+3. **Adversarial validation** ([§2.14](#s-2-14)) — the diagnostic that
    eventually revealed why V5 failed
-4. **Train/test drift** (§2.14) — the underlying phenomenon
+4. **Train/test drift** ([§2.14](#s-2-14)) — the underlying phenomenon
 
 ### Implementation
 12 new TE features added, of which 4 are cross-key:
@@ -1046,6 +1170,8 @@ Two follow-ups:
 
 ---
 
+<a id="v5-2"></a>
+
 ## V5.2 — cross-key TE ablation
 
 ### Status
@@ -1097,6 +1223,8 @@ can't detect drift, time to rebuild with stricter checks.
 
 ---
 
+<a id="v6"></a>
+
 ## V6 — temporal validation, LOO-9 (Kaggle 0.42004)
 
 ### Status
@@ -1111,17 +1239,17 @@ Kaggle. Pairing this with LOO-trimmed ensemble selection should
 yield a clean, drift-free baseline."
 
 ### Concepts used
-1. **Temporal validation** (§2.12) — held-out by date, not by
+1. **Temporal validation** ([§2.12](#s-2-12)) — held-out by date, not by
    random sample
-2. **Leave-one-out ensemble trimming** (§2.13) — drop ensemble
+2. **Leave-one-out ensemble trimming** ([§2.13](#s-2-13)) — drop ensemble
    members that hurt val
-3. **Drift gate** (§2.14) — only ship features with `|Δμ|/σ < 0.02`
+3. **Drift gate** ([§2.14](#s-2-14)) — only ship features with `|Δμ|/σ < 0.02`
    and single-feature adversarial AUC < 0.55
-4. **Position-bias-adjusted features** (§2.7) — compute click rates
+4. **Position-bias-adjusted features** ([§2.7](#s-2-7)) — compute click rates
    while accounting for position
-5. **Smoothing in TE** (§2.15) — shrink small-cell estimates toward
+5. **Smoothing in TE** ([§2.15](#s-2-15)) — shrink small-cell estimates toward
    global mean
-6. **Binary classifier as ensemble member** (§2.11) — predicting
+6. **Binary classifier as ensemble member** ([§2.11](#s-2-11)) — predicting
    `click_bool` with logistic loss instead of ranking
 7. **Best-iteration reload bug** — LightGBM-specific gotcha after
    model save/load
@@ -1155,8 +1283,8 @@ ensemble.
     at (so a property that's only ever shown at position 30 isn't
     penalized for low absolute click rate)
   - `s40` — smoothed by adding 40 "global mean" pseudo-observations
-    (§2.15)
-  - `oof` — computed out-of-fold (§2.6)
+    ([§2.15](#s-2-15))
+  - `oof` — computed out-of-fold ([§2.6](#s-2-6))
   Result: drift gate passes (|Δμ|/σ < 0.02).
 
 - **DS** = `prop_dest_book_rate_safe`. Per-(property, destination)
@@ -1220,7 +1348,7 @@ match. V6's "more honest" choice over-corrected.
 
 This wasn't fully diagnosed in the project. A from-scratch redo
 would verify it by checking the test set's date distribution
-(§5.2).
+([§5.2](#s-5-2)).
 
 ### What this version taught
 - **Temporal validation prevents the V5 drift trap** but may
@@ -1240,6 +1368,8 @@ where V6 gets things wrong, and design features specifically to fix
 those mistakes.
 
 ---
+
+<a id="v7"></a>
 
 ## V7 — failure-pattern features
 
@@ -1262,7 +1392,7 @@ beyond V6's information ceiling."
    for known failure modes
 3. **HIGH_DRIFT feature rejection** — kill features that fail the
    drift gate even if they would help locally
-4. **Weight dilution in ensembles** (§2.13) — adding a weaker member
+4. **Weight dilution in ensembles** ([§2.13](#s-2-13)) — adding a weaker member
    at small weight can still hurt if the dilution exceeds the
    diversity gain
 
@@ -1348,6 +1478,8 @@ instead.
 
 ---
 
+<a id="v8"></a>
+
 ## V8 — structural diversity (first ensemble lift)
 
 ### Status
@@ -1363,14 +1495,14 @@ a model to V6 LOO-9 as a small ensemble member should give a real
 lift."
 
 ### Concepts used
-1. **Structural ensemble diversity** (§2.11, §2.13) — vary the loss
+1. **Structural ensemble diversity** ([§2.11](#s-2-11), [§2.13](#s-2-13)) — vary the loss
    function and architecture, not just hyperparameters
-2. **`rank_xendcg` listwise objective** (§2.11) — different ranking
+2. **`rank_xendcg` listwise objective** ([§2.11](#s-2-11)) — different ranking
    formulation than LambdaRank's pairwise
-3. **Regularization in tree models** (§2.8) — L2, num_leaves caps,
+3. **Regularization in tree models** ([§2.8](#s-2-8)) — L2, num_leaves caps,
    min_data_in_leaf, to control overfitting in models with novel
    objectives
-4. **Load-bearing attribution via LOO** (§2.13) — verifying which
+4. **Load-bearing attribution via LOO** ([§2.13](#s-2-13)) — verifying which
    ensemble member is doing the work
 
 ### Implementation
@@ -1398,7 +1530,7 @@ For each, evaluate as: V6 LOO-9 @ 0.90 + this model @ 0.10. Pick
 the addition that gives the largest local val improvement.
 
 ### Configuration
-Baseline = V6 LOO-9 (the 9-member ensemble from §V6).
+Baseline = V6 LOO-9 (the 9-member ensemble from [§V6](#v6)).
 
 Per model variant, the only difference from V6's standard config
 is the structural change being tested.
@@ -1451,6 +1583,8 @@ with multiple objectives, multiple model classes, multiple seeds?
 
 ---
 
+<a id="v9"></a>
+
 ## V9 — the overnight batch (Kaggle 0.42012)
 
 ### Status
@@ -1467,10 +1601,10 @@ regularization. Pick the best ensemble via grid search."
 
 ### Concepts used
 1. **All of V8's concepts**
-2. **CatBoost YetiRank** (§2.11) — second listwise objective in a
+2. **CatBoost YetiRank** ([§2.11](#s-2-11)) — second listwise objective in a
    different framework
-3. **XGBoost** (§2.8) — third GBDT framework
-4. **`inf` handling in XGBoost** (§2.8) — XGBoost requires explicit
+3. **XGBoost** ([§2.8](#s-2-8)) — third GBDT framework
+4. **`inf` handling in XGBoost** ([§2.8](#s-2-8)) — XGBoost requires explicit
    `missing=np.nan` while LightGBM/CatBoost handle inf
 5. **Fault-tolerant batch pipelines** — resumable, exception-isolated,
    atomic writes
@@ -1572,6 +1706,8 @@ reweighting is the standard domain-adaptation technique. Try it.
 
 ---
 
+<a id="v10"></a>
+
 ## V10 — adversarial reweighting (Kaggle 0.41903, regression)
 
 ### Status
@@ -1588,7 +1724,7 @@ P(test|x))`. This is the textbook domain-adaptation technique. If
 drift is the bottleneck, this should help."
 
 ### Concepts used
-1. **Adversarial validation** (§2.14) — repeated here as the
+1. **Adversarial validation** ([§2.14](#s-2-14)) — repeated here as the
    weighting signal source
 2. **Importance ratios** — `P(test|x) / (1 − P(test|x))` reweighting
 3. **Importance sampling** — the statistical justification
@@ -1709,6 +1845,8 @@ models.
 
 ---
 
+<a id="v11"></a>
+
 ## V11 — the final two submissions
 
 ### Status
@@ -1726,7 +1864,7 @@ equal weight."
 ### Concepts used
 1. **Ensemble philosophy comparison** — controlled test of two
    different approaches on the same model pool
-2. **Backbone weight tuning** (§2.13) — V11a tests whether 0.75 V6
+2. **Backbone weight tuning** ([§2.13](#s-2-13)) — V11a tests whether 0.75 V6
    weight beats 0.80
 3. **Massive equal-weight bagging** — V11b tests whether 23
    diverse models at equal weight beats a backbone-heavy ensemble
@@ -1802,10 +1940,14 @@ Part 5 for the priority list.
 
 ---
 
+<a id="part-4"></a>
+
 # Part 4 · The lessons (in plain language)
 
 These are the transferable insights. They apply to ranking ML in
 general, not just this dataset.
+
+<a id="l1"></a>
 
 ## L1: Local val and Kaggle test are different objectives when drift is present
 
@@ -1817,6 +1959,8 @@ same number; they're estimates of DIFFERENT numbers.
 your val set and the test set. AUC > 0.7 means your val is
 unreliable. AUC = 1.0 means it's essentially useless for
 generalization.
+
+<a id="l2"></a>
 
 ## L2: Temporal validation is stricter, but not necessarily closer to Kaggle
 
@@ -1831,6 +1975,8 @@ Random val OVERESTIMATED by 0.005. Temporal val UNDERESTIMATED by
 **Operational rule:** track BOTH validation strategies. Disagreement
 is the drift signal. Don't pick one.
 
+<a id="l3"></a>
+
 ## L3: Drift absorbs most of your local gains
 
 V8→V9 local improvement of +0.00075 became only +0.00008 on Kaggle.
@@ -1839,6 +1985,8 @@ The translation ratio was ~11%.
 **Operational rule:** when planning improvements, multiply your
 expected local gain by 0.1 to forecast Kaggle impact. If that's not
 worth your time, don't do it.
+
+<a id="l4"></a>
 
 ## L4: Sample reweighting cannot fix structural drift
 
@@ -1851,6 +1999,8 @@ feature engineering producing non-drifting alternatives. Time-windowed
 aggregates; within-query relative features; killing
 high-adversarial-AUC features at the source.
 
+<a id="l5"></a>
+
 ## L5: Objective diversity > hyperparameter diversity for ensembles
 
 V4's "ensemble" was multiple LambdaRank `label_gain` variants —
@@ -1862,6 +2012,8 @@ AND different objective).
 **Operational rule:** when ensembling, prioritize varying the LOSS
 FUNCTION and MODEL CLASS over hyperparameters within a single
 objective.
+
+<a id="l6"></a>
 
 ## L6: Strong backbone + small-weight diversifiers > equal-weight bagging
 
@@ -1877,6 +2029,8 @@ The peak is at V6 weight ~0.80. Lower hurts.
 
 **Operational rule:** when one ensemble member is clearly strongest,
 give it 0.70–0.85 weight and use diversifiers for fine-tuning.
+
+<a id="l7"></a>
 
 ## L7: In-model feature stacking has a ceiling
 
@@ -1895,6 +2049,8 @@ that hurt val.
 models, ensemble their PREDICTIONS outside the model rather than
 combining their FEATURES inside one model.
 
+<a id="l8"></a>
+
 ## L8: Fault-tolerant pipelines pay for themselves
 
 The project's resumable / atomic / exception-isolated patterns
@@ -1910,6 +2066,8 @@ recovered multiple incidents:
 exception-isolated (per-unit try/except), and have an error
 directory for diagnostics.
 
+<a id="l9"></a>
+
 ## L9: Submission format is easy to get wrong
 
 V6 initially wrote `SearchId,PropertyId` (Pandas default
@@ -1919,6 +2077,8 @@ capitalization) — Kaggle expected `srch_id,prop_id` lowercase
 **Operational rule:** every submission writer should validate
 column names against the sample submission file. Bake it into the
 write step.
+
+<a id="l10"></a>
 
 ## L10: Anchor invariants catch silent regressions
 
@@ -1934,9 +2094,13 @@ script that asserts a single-model output matches a known value to
 
 ---
 
+<a id="part-5"></a>
+
 # Part 5 · Where to go from here
 
 Honest assessment of the highest-leverage unattempted moves.
+
+<a id="s-5-1"></a>
 
 ## 5.1 `random_bool=1`-derived features (highest single-move EV)
 
@@ -1958,6 +2122,8 @@ As a feature, it provides every model a position-bias-free signal.
 **Cost:** ~4 hours. **Expected lift:** +0.003 to +0.008. **Confidence:**
 high.
 
+<a id="s-5-2"></a>
+
 ## 5.2 Verify the test set's date distribution
 
 A 10-minute experiment that could reframe everything.
@@ -1973,6 +2139,8 @@ was overcorrecting and V4's random val was the right objective.
 `train.csv`. If they overlap significantly, the test set is not
 strictly future-held-out.
 
+<a id="s-5-3"></a>
+
 ## 5.3 Within-srch_id rank features (cheap, drift-immune)
 
 For every continuous feature (`price_usd`, `prop_starrating`,
@@ -1984,6 +2152,8 @@ For every continuous feature (`price_usd`, `prop_starrating`,
 ~30 new features, drift-immune by construction.
 
 **Cost:** 2–3 hours. **Expected lift:** +0.001–0.003 each, additive.
+
+<a id="s-5-4"></a>
 
 ## 5.4 `comp1` through `comp8` engineered properly
 
@@ -1998,6 +2168,8 @@ The 2013 ICDM winning solutions reportedly hammered these features.
 
 **Cost:** 3–4 hours. **Expected lift:** +0.002–0.005.
 
+<a id="s-5-5"></a>
+
 ## 5.5 Stacking instead of rank-averaging
 
 Replace V11 MEGA-BAG's equal-weight average with: train a small
@@ -2011,6 +2183,8 @@ rank-averaging treats as fixed.
 
 **Cost:** 3 hours. **Expected lift:** +0.002–0.005 over MEGA-BAG.
 
+<a id="s-5-6"></a>
+
 ## 5.6 PyTorch listwise neural ranker
 
 3-layer MLP (512→256→1) trained with ListNet loss (cross-entropy
@@ -2018,6 +2192,8 @@ listwise) or approxNDCG. New model class, new inductive bias.
 
 **Cost:** 6–10 hours (first NN baseline is always brittle).
 **Expected lift as ensemble member:** +0.002 to +0.005.
+
+<a id="s-5-7"></a>
 
 ## 5.7 What NOT to do
 
@@ -2031,9 +2207,11 @@ These are settled by experimental evidence:
   V4 already has these; adding more is diminishing returns within
   one objective family.
 
+<a id="s-5-8"></a>
+
 ## 5.8 Honest projection
 
-A focused 1-week sprint on §5.1, §5.3, §5.4, §5.5 could plausibly
+A focused 1-week sprint on [§5.1](#s-5-1), [§5.3](#s-5-3), [§5.4](#s-5-4), [§5.5](#s-5-5) could plausibly
 reach **0.428–0.432** on this dataset. Beyond that — toward the
 ~0.46 zone seen on the top of the public leaderboard — requires
 structurally different approaches (custom losses,
@@ -2042,6 +2220,8 @@ that aren't solo-week work.
 
 ---
 
+<a id="part-6"></a>
+
 # Part 6 · Glossary
 
 Quick reference. Cross-references point to Part 2 sections where
@@ -2049,60 +2229,60 @@ each is explained in depth.
 
 | Term | Definition |
 |---|---|
-| **Ablation** | Removing one variable to attribute an effect to it (§V5.2) |
-| **Adversarial validation** | Train a classifier to distinguish train rows from test rows; AUC measures drift (§2.14) |
-| **Anchor invariant** | A reproducibility tripwire: single-model output must match a known value to 6 decimals (§2.9) |
-| **AUC** | Area Under ROC Curve. 0.5 = random, 1.0 = perfect separation (§2.14) |
-| **Backbone** | Strongest single member of an ensemble; in this project, V6 LOO-9 (§2.13) |
-| **Bin sampling** | LightGBM's process of converting continuous features into discrete buckets (§2.9) |
-| **CatBoost** | Yandex's gradient boosting library; includes YetiRank ranking objective (§2.8) |
-| **`comp1`–`comp8`** | Eight competitor price/availability columns in the dataset (§1.2) |
-| **CP** | V6's clean-drift feature `prop_click_rate_pos_adj_s40_oof` (§V6) |
-| **Cross-key target encoding** | TE computed on the combination of two categorical IDs (§2.5) |
-| **DCG** | Discounted Cumulative Gain (§1.3) |
-| **Drift / distribution shift** | Train and test come from different distributions (§2.14) |
-| **Drift gate** | Project's threshold for shipping a feature: `|Δμ|/σ < 0.02` AND single-feature adversarial AUC < 0.55 (§2.14) |
-| **DS** | V6's clean-drift feature `prop_dest_book_rate_safe` (§V6) |
-| **Early stopping** | Stop training when val score hasn't improved in N iterations (§2.8) |
-| **Ensembling** | Combining multiple models' predictions for joint performance (§2.13) |
-| **Feature engineering** | Designing new feature columns from raw data (§2.3) |
-| **GBDT** | Gradient Boosted Decision Trees; the model family behind LightGBM, CatBoost, XGBoost (§2.8) |
-| **iDCG** | Ideal DCG: DCG of the perfect ranking (§1.3) |
-| **Importance ratio** | `P(test|x) / (1 − P(test|x))` for sample reweighting (§V10) |
-| **IPW** | Inverse Propensity Weighting: row weights `1/P(observation|features)` to correct selection bias (§2.7) |
-| **`label_gain`** | LightGBM parameter mapping relevance values to gradient magnitudes (§2.10) |
-| **LambdaRank** | Pairwise ranking loss weighted by NDCG impact of each swap (§2.10) |
-| **LightGBM** | Microsoft's fast gradient boosting library; the project's workhorse (§2.8) |
-| **Listwise** | Ranking approach where the loss considers the full list per search (§2.2) |
-| **Load-bearing attribution** | Using LOO to verify which ensemble member is doing the work (§2.13) |
-| **Local NDCG** | NDCG computed on a held-out portion of training data (§2.12) |
-| **LOO** | Leave-One-Out: ensemble trimming method (§2.13) |
-| **MEGA-BAG** | V11b submission: 23 trained models equal-weight rank-averaged (§V11) |
-| **NDCG@5** | Normalized DCG considering only top 5 positions (§1.3) |
-| **OOF** | Out-of-Fold: computing a feature for row R using only rows outside R's fold (§2.6) |
-| **Pairwise** | Ranking approach over pairs of items (§2.2) |
-| **Pointwise** | Ranking approach as independent regression/classification (§2.2) |
-| **Position bias** | Top-of-page items get more clicks because of visibility, not quality (§2.7) |
-| **`prop_id`** | Unique property (hotel) ID column (§1.2) |
-| **Random validation** | Randomly-held-out 20% of training data (§2.12) |
-| **`random_bool`** | 1 if Expedia displayed the search in random order; defines the unbiased subset (§1.2, §5.1) |
-| **Rank averaging** | Ensembling by averaging within-query ranks across models (§2.13) |
-| **`rank_xendcg`** | LightGBM's listwise ranking objective (§2.11) |
-| **Reproducibility** | Same seed and code = same output bit-for-bit (§2.9) |
-| **SAFE-PUSH** | V11a submission: V6 LOO-9 @ 0.75 + 6 diversifiers @ 0.0417 (§V11) |
-| **Smoothing** | Shrinking small-cell TE estimates toward global mean (§2.15) |
-| **`srch_id`** | Unique search query ID column (§1.2) |
-| **Stacking** | Ensembling via a meta-model trained on base predictions (§2.13) |
-| **Stratified K-fold** | K-fold ensuring same-group rows stay in the same fold (§2.12) |
-| **Target encoding (TE)** | Replacing a category with the average target for that category (§2.5) |
-| **Target leakage** | When a feature was computed using its own row's label (§2.5) |
-| **Temporal validation** | Hold out the last N days of training as val (§2.12) |
-| **V4 anchor invariant** | The reproducibility check asserting NDCG@5 = 0.42191 on V4's single-model random val (§V4) |
-| **V6 LOO-9** | V6's 9-member ensemble after LOO dropped the binary classifier (§V6) |
-| **Weighted ensembling** | Ensembling with non-equal weights per member (§2.13) |
-| **Within-query rank feature** | Property's rank on feature F within its `srch_id` (§2.4) |
-| **XGBoost** | DMLC's gradient boosting library; has the `inf in input` gotcha (§2.8) |
-| **YetiRank** | CatBoost's listwise ranking objective (§2.11) |
+| **Ablation** | Removing one variable to attribute an effect to it ([§V5.2](#v5-2)) |
+| **Adversarial validation** | Train a classifier to distinguish train rows from test rows; AUC measures drift ([§2.14](#s-2-14)) |
+| **Anchor invariant** | A reproducibility tripwire: single-model output must match a known value to 6 decimals ([§2.9](#s-2-9)) |
+| **AUC** | Area Under ROC Curve. 0.5 = random, 1.0 = perfect separation ([§2.14](#s-2-14)) |
+| **Backbone** | Strongest single member of an ensemble; in this project, V6 LOO-9 ([§2.13](#s-2-13)) |
+| **Bin sampling** | LightGBM's process of converting continuous features into discrete buckets ([§2.9](#s-2-9)) |
+| **CatBoost** | Yandex's gradient boosting library; includes YetiRank ranking objective ([§2.8](#s-2-8)) |
+| **`comp1`–`comp8`** | Eight competitor price/availability columns in the dataset ([§1.2](#s-1-2)) |
+| **CP** | V6's clean-drift feature `prop_click_rate_pos_adj_s40_oof` ([§V6](#v6)) |
+| **Cross-key target encoding** | TE computed on the combination of two categorical IDs ([§2.5](#s-2-5)) |
+| **DCG** | Discounted Cumulative Gain ([§1.3](#s-1-3)) |
+| **Drift / distribution shift** | Train and test come from different distributions ([§2.14](#s-2-14)) |
+| **Drift gate** | Project's threshold for shipping a feature: `|Δμ|/σ < 0.02` AND single-feature adversarial AUC < 0.55 ([§2.14](#s-2-14)) |
+| **DS** | V6's clean-drift feature `prop_dest_book_rate_safe` ([§V6](#v6)) |
+| **Early stopping** | Stop training when val score hasn't improved in N iterations ([§2.8](#s-2-8)) |
+| **Ensembling** | Combining multiple models' predictions for joint performance ([§2.13](#s-2-13)) |
+| **Feature engineering** | Designing new feature columns from raw data ([§2.3](#s-2-3)) |
+| **GBDT** | Gradient Boosted Decision Trees; the model family behind LightGBM, CatBoost, XGBoost ([§2.8](#s-2-8)) |
+| **iDCG** | Ideal DCG: DCG of the perfect ranking ([§1.3](#s-1-3)) |
+| **Importance ratio** | `P(test|x) / (1 − P(test|x))` for sample reweighting ([§V10](#v10)) |
+| **IPW** | Inverse Propensity Weighting: row weights `1/P(observation|features)` to correct selection bias ([§2.7](#s-2-7)) |
+| **`label_gain`** | LightGBM parameter mapping relevance values to gradient magnitudes ([§2.10](#s-2-10)) |
+| **LambdaRank** | Pairwise ranking loss weighted by NDCG impact of each swap ([§2.10](#s-2-10)) |
+| **LightGBM** | Microsoft's fast gradient boosting library; the project's workhorse ([§2.8](#s-2-8)) |
+| **Listwise** | Ranking approach where the loss considers the full list per search ([§2.2](#s-2-2)) |
+| **Load-bearing attribution** | Using LOO to verify which ensemble member is doing the work ([§2.13](#s-2-13)) |
+| **Local NDCG** | NDCG computed on a held-out portion of training data ([§2.12](#s-2-12)) |
+| **LOO** | Leave-One-Out: ensemble trimming method ([§2.13](#s-2-13)) |
+| **MEGA-BAG** | V11b submission: 23 trained models equal-weight rank-averaged ([§V11](#v11)) |
+| **NDCG@5** | Normalized DCG considering only top 5 positions ([§1.3](#s-1-3)) |
+| **OOF** | Out-of-Fold: computing a feature for row R using only rows outside R's fold ([§2.6](#s-2-6)) |
+| **Pairwise** | Ranking approach over pairs of items ([§2.2](#s-2-2)) |
+| **Pointwise** | Ranking approach as independent regression/classification ([§2.2](#s-2-2)) |
+| **Position bias** | Top-of-page items get more clicks because of visibility, not quality ([§2.7](#s-2-7)) |
+| **`prop_id`** | Unique property (hotel) ID column ([§1.2](#s-1-2)) |
+| **Random validation** | Randomly-held-out 20% of training data ([§2.12](#s-2-12)) |
+| **`random_bool`** | 1 if Expedia displayed the search in random order; defines the unbiased subset ([§1.2](#s-1-2), [§5.1](#s-5-1)) |
+| **Rank averaging** | Ensembling by averaging within-query ranks across models ([§2.13](#s-2-13)) |
+| **`rank_xendcg`** | LightGBM's listwise ranking objective ([§2.11](#s-2-11)) |
+| **Reproducibility** | Same seed and code = same output bit-for-bit ([§2.9](#s-2-9)) |
+| **SAFE-PUSH** | V11a submission: V6 LOO-9 @ 0.75 + 6 diversifiers @ 0.0417 ([§V11](#v11)) |
+| **Smoothing** | Shrinking small-cell TE estimates toward global mean ([§2.15](#s-2-15)) |
+| **`srch_id`** | Unique search query ID column ([§1.2](#s-1-2)) |
+| **Stacking** | Ensembling via a meta-model trained on base predictions ([§2.13](#s-2-13)) |
+| **Stratified K-fold** | K-fold ensuring same-group rows stay in the same fold ([§2.12](#s-2-12)) |
+| **Target encoding (TE)** | Replacing a category with the average target for that category ([§2.5](#s-2-5)) |
+| **Target leakage** | When a feature was computed using its own row's label ([§2.5](#s-2-5)) |
+| **Temporal validation** | Hold out the last N days of training as val ([§2.12](#s-2-12)) |
+| **V4 anchor invariant** | The reproducibility check asserting NDCG@5 = 0.42191 on V4's single-model random val ([§V4](#v4)) |
+| **V6 LOO-9** | V6's 9-member ensemble after LOO dropped the binary classifier ([§V6](#v6)) |
+| **Weighted ensembling** | Ensembling with non-equal weights per member ([§2.13](#s-2-13)) |
+| **Within-query rank feature** | Property's rank on feature F within its `srch_id` ([§2.4](#s-2-4)) |
+| **XGBoost** | DMLC's gradient boosting library; has the `inf in input` gotcha ([§2.8](#s-2-8)) |
+| **YetiRank** | CatBoost's listwise ranking objective ([§2.11](#s-2-11)) |
 
 ---
 
