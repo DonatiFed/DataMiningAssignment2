@@ -1,6 +1,6 @@
 # Journey Explained — A First-Principles Walkthrough
 
-A long-form, no-prior-knowledge-required explanation of what this
+A long-form explanation of what this
 project did, why each step happened, and what every technique means.
 
 This document is the **tutorial** companion to:
