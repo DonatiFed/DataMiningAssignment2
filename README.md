@@ -1,175 +1,82 @@
-# Expedia Hotel Search Ranking — Data Mining Techniques Assignment 2
+# Expedia Hotel Search Ranking
 
-Learning-to-rank on the Expedia Personalized Hotel Search Kaggle dataset.
-**Metric: NDCG@5.** The model must sort the hotels shown for each search
-query (`srch_id`) so that the booked hotel appears as high as possible.
+LightGBM-based learning-to-rank on the Expedia Personalized Hotel Search
+Kaggle dataset. The model sorts hotels within each search query so that
+the booked hotel appears as high as possible. Metric: **NDCG@5**.
 
-## Headline result
+## Results
 
-**Kaggle public NDCG@5 = 0.42021 (V4 ensemble).**
+| version | Kaggle public NDCG@5 |
+|---|---:|
+| **V4 ensemble** ★ | **0.42021** |
+| V9 overnight diversity | 0.42012 |
+| V6 LOO-9 temporal | 0.42004 |
+| V11 mega-bag (23-model equal rank-avg) | 0.42003 |
+| V11 safe-push | 0.41995 |
+| V5 cross-key TEs | 0.41943 |
+| V10 adversarial reweight | 0.41903 |
+| V4.2 Phase 2 | 0.41639 |
 
-V4 was the best Kaggle submission across all attempted versions. Six
-subsequent versions (V5 through V11) were explored to try to surpass it
-but did not improve the score on the Kaggle leaderboard. The full
-journey, including what was learned from each version, is documented in
-`docs/journey.md`.
-
-## Kaggle public scoreboard (all uploaded submissions)
-
-| version | submission | Kaggle public NDCG@5 |
-|---|---|---:|
-| **V4 ensemble** ★ | `submissions/submission_v4_20260515_151132.csv` | **0.42021** |
-| V9 overnight diversity | `submission_overnight_best_deployable_20260517_095946.csv` | 0.42012 |
-| V6 LOO-9 (temporal split) | `submission_v6_loo9_20260516_184304.csv` | 0.42004 |
-| V11 MEGA-BAG (23-model equal rank-avg) | `submission_FINAL_megabag_25equal_*.csv` | 0.42003 |
-| V11 SAFE-PUSH | `submission_FINAL_safepush_v75_6div_*.csv` | 0.41995 |
-| V5 ensemble (added cross-key TEs) | `submission_v5_ensemble_*.csv` | 0.41943 |
-| V10 adversarial reweighting | `submission_adv_reweight_*.csv` | 0.41903 |
-| V4.2 (Phase 2 single model) | `submission_phase2_best_*.csv` | 0.41639 |
-
-★ = selected as one of two final submissions for the private leaderboard.
-Top of the public leaderboard at the time: approximately 0.46.
-
-## Repository layout
-
-```
-.
-├── README.md                          ← this file
-├── CHANGELOG.md                       ← version-by-version changelog
-├── pyproject.toml / requirements.txt / uv.lock / setup_vm.sh
-│
-├── data/                              raw CSVs (gitignored)
-├── notebooks/                         EDA notebooks (executed)
-│
-├── src/                               importable library
-│   ├── config.py                       data paths, column lists
-│   ├── data_loader.py                  load_train / load_test / split_val
-│   ├── features.py                     143-feature pipeline + IPW + k-fold TE
-│   ├── evaluate.py                     NDCG@5 helpers
-│   ├── submission.py                   CSV writer
-│   └── artifacts.py                    per-run artifact saving
-│
-├── pipelines/                         end-to-end runnable workflows
-│   ├── README.md
-│   ├── temporal_validation.py          temporal split + V4 anchor on temporal val
-│   ├── evaluate_variant.py             single-feature variant harness
-│   ├── overnight_experiments.py        bulk LightGBM grid (random split)
-│   ├── v5.py / v5_2.py                 V5 (cross-key TEs) and V5.2 (drift-TE ablation)
-│   ├── v6.py / v6_submit.py            ★ V6 temporal-clean ensemble + submission
-│   ├── phase7_batch.py                 V7 — failure-pattern feature variants
-│   ├── phase7_weighted_batch.py        V7 — weighted-ensemble tuning of V7 features
-│   ├── structural_batch.py             V8 — structural diversity (objectives, regularization)
-│   ├── overnight_final_batch.py        V9 — large diversity batch (LGBM + XGB + CatBoost)
-│   ├── adversarial_reweight_batch.py   V10 — adversarial sample reweighting
-│   └── legacy/                         V3, V4, Phase 2/3 earlier pipelines
-│
-├── scripts/                           one-off diagnostic and recovery scripts
-│   ├── README.md
-│   ├── diagnose_v5_gap.py              V4↔V5 Kaggle gap forensics (found adv AUC = 1.0)
-│   ├── eda_summary.py                  5 EDA tables for the report
-│   ├── eda_dest_click_rate.py          dest_click_rate as a query-context feature
-│   ├── failure_pattern_analysis.py     V6 booked-vs-top-wrong analysis (drove V7)
-│   ├── ensemble_rank_avg.py            quick rank-average sandbox
-│   ├── ensemble_search.py              ensemble member-subset combinator search
-│   ├── ensemble_normalization_search.py paper-inspired ensemble normalization sweep
-│   ├── temporal_rescore_overnight.py   rescore overnight V4 boosters on temporal val
-│   ├── te_safe_single.py               single-key TE drift safety experiment
-│   ├── aggregate_results.py            promote per-run artifacts → experiment_logs
-│   ├── overnight_submit_best.py        V9 submission recovery (after pipeline crash)
-│   ├── overnight_xgb_rescue.py         V9 XGB retraining with NaN/Inf cleanup
-│   └── build_two_final_submissions.py  V11 final 2 submissions (no retraining)
-│
-├── docs/                              ← documentation
-│   ├── journey.md                      ★ chronological narrative V3 → V11
-│   ├── final_kaggle_results.md         ★ authoritative scoreboard + reproducibility
-│   ├── lessons_learned.md              ★ methodological + technical takeaways
-│   ├── architecture.md                 code structure + data flow
-│   ├── results.md                      experiment-level NDCG@5 results
-│   ├── next_steps.md                   forward queue (unattempted ideas)
-│   ├── v4_phase2_summary.md            V4 + Phase 2 narrative
-│   └── archive/                        superseded planning docs
-│
-├── experiment_logs/                   aggregated CSV trackers
-├── artifacts/                         per-run outputs (JSON/CSV tracked, binaries gitignored)
-├── diagnostics/                       analyses + cached features per experiment
-├── models/                            saved boosters (gitignored)
-├── submissions/                       Kaggle CSVs (gitignored, see scoreboard above)
-└── logs/                              session logs (gitignored)
-```
+★ selected for the Kaggle private leaderboard. Full scoreboard with
+reproducibility commands → [`docs/final_kaggle_results.md`](docs/final_kaggle_results.md).
 
 ## Quick start
 
 ```bash
-./setup_vm.sh              # one-time: install uv + venv + smoke import
-
-# Reproduce the winning V4 ensemble
-uv run python pipelines/legacy/v4_ensemble.py
-
-# Reproduce V6 LOO-9 (temporal-clean baseline)
-uv run python pipelines/v6.py
-uv run python pipelines/v6_submit.py
-
-# Test a single feature variant
-uv run python pipelines/evaluate_variant.py --variant prop_click_rate_pos_adj_s40_oof
+./setup_vm.sh                                       # one-time setup (uv + venv)
+uv run python pipelines/legacy/v4_ensemble.py       # reproduce V4 (best)
+uv run python pipelines/v6.py                       # reproduce V6 temporal ensemble
+uv run python pipelines/v6_submit.py                # build the V6 submission CSV
 ```
 
-Always run from the project root (Python module imports require `cwd` on
-`sys.path`).
+All commands run from the project root.
 
-## What to read first
+## Repository
 
-If you are reading this repository for the first time:
+```
+src/              library — features, IPW, k-fold TE, NDCG helpers
+pipelines/        end-to-end runnable workflows (V5 → V10)
+pipelines/legacy/ V3, V4, Phase 2/3 archive
+scripts/          diagnostic & recovery scripts
+notebooks/        EDA notebooks (executed)
+docs/             documentation (see below)
+diagnostics/      per-experiment outputs (CSV / JSON / README per run)
+artifacts/        per-run JSON / CSV metadata
+submissions/      Kaggle CSVs (gitignored) + per-submission READMEs
+```
 
-1. **`docs/journey.md`** — the chronological story of how the model
-   evolved. Best starting point.
-2. **`docs/final_kaggle_results.md`** — definitive scoreboard with
-   reproducibility commands.
-3. **`docs/lessons_learned.md`** — methodological and technical
-   takeaways with supporting evidence.
-4. **`docs/architecture.md`** — code structure and data flow.
+## Documentation
 
-## Key technical findings
+| file | what it covers |
+|---|---|
+| [`docs/journey.md`](docs/journey.md) | chronological narrative V3 → V11 with what was learned at each step |
+| [`docs/final_kaggle_results.md`](docs/final_kaggle_results.md) | authoritative Kaggle scoreboard + reproducibility commands |
+| [`docs/lessons_learned.md`](docs/lessons_learned.md) | methodological and technical takeaways with supporting evidence |
+| [`docs/architecture.md`](docs/architecture.md) | code structure and data flow |
+| [`docs/results.md`](docs/results.md) | experiment-level NDCG@5 results (variants, ensembles) |
+| [`docs/next_steps.md`](docs/next_steps.md) | unattempted ideas and recommended forward queue |
+| [`docs/v4_phase2_summary.md`](docs/v4_phase2_summary.md) | detailed V4 + Phase 2 narrative |
+| [`CHANGELOG.md`](CHANGELOG.md) | version-by-version changelog |
+| [`pipelines/README.md`](pipelines/README.md) | index of runnable pipelines |
+| [`scripts/README.md`](scripts/README.md) | index of standalone scripts |
+| [`submissions/README.md`](submissions/README.md) | submission inventory |
 
-A short version of `docs/lessons_learned.md`:
+## Key findings (short)
 
-- **Train/test distribution drift is the dominant problem** on this
-  dataset. The V5 cross-key target-encoding features had adversarial AUC
-  = 1.0 against the test set, meaning a binary classifier could perfectly
-  distinguish train from test rows. The V10 adversarial classifier
-  independently rediscovered V5's failure mode and confirmed the same
-  features as the drift drivers.
-- **Sample reweighting (importance ratios) cannot fix structural drift.**
-  V10 attempted this and lost −0.00118 on Kaggle. The drift is in
-  features the model must use to rank well; penalizing their importance
-  hurts generalization.
-- **Local NDCG@5 is a treacherous metric.** Random validation overfits
-  the train distribution; temporal validation is closer to Kaggle but
-  still leaves a +0.011 local→Kaggle gap. Roughly 89% of any local
-  improvement was absorbed by drift on the path from local to Kaggle.
-- **V4's LambdaRank ensemble with `label_gain` sweep is near the
-  practical ceiling** for this dataset using LightGBM and the
-  143-feature engineering pipeline. Six subsequent versions and roughly
-  50 trained models could not surpass it on Kaggle.
-- **Different objectives (`rank_xendcg`, CatBoost YetiRank) provide more
-  diversity than different `label_gain` values.** This was the single
-  most consistent ensemble-improvement direction.
+- Train/test distribution **drift is severe** (adversarial AUC = 1.0 on
+  cross-key target-encoding features).
+- **Local NDCG@5 is a treacherous metric.** Random splits overfit; the
+  temporal split is closer to Kaggle but still leaves a +0.011 gap.
+- **Sample reweighting cannot fix structural drift.** V10 attempted this
+  and lost −0.00118 on Kaggle.
+- **V4's LambdaRank ensemble is near the practical ceiling** for this
+  dataset with LightGBM and the 143-feature pipeline. Six subsequent
+  versions could not surpass it on Kaggle.
+- **Different objectives provide more ensemble diversity than different
+  `label_gain` values.** `rank_xendcg` and CatBoost `YetiRank` were the
+  most useful diversifiers.
 
-## Key invariants (carried into any new pipeline)
-
-- **Temporal split** is the validation contract going forward. Anchor:
-  V4_ANCHOR temporal NDCG@5 = 0.40401. Reference:
-  `pipelines/temporal_validation.py`.
-- **No `lgb.Dataset.construct()` outside the per-configuration loop** —
-  let `lgb.train` construct lazily so `seed=456` propagates correctly to
-  bin sampling. See `docs/v4_phase2_summary.md` for the original bug.
-- **Kaggle submission CSV header must be `srch_id,prop_id` (lowercase)** —
-  matches `data/submission_sample.csv`.
-- **CP and DS are separate ensemble members.** In-model feature stacking
-  is consistently anti-additive at this feature count (proven in
-  `diagnostics/eval_variants/results.csv`).
-- **Any new target-encoding feature requires an adversarial-AUC check**
-  on the generated feature distribution between train and test (proxy:
-  temporal val).
+Full discussion: [`docs/lessons_learned.md`](docs/lessons_learned.md).
 
 ## Setup
 
