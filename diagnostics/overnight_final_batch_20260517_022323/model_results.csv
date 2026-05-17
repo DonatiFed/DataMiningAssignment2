@@ -1,0 +1,35 @@
+model_id,framework,type,phase,seed,extra_feature,status,n_features,best_iter,ndcg5,recall1,recall5,mean_booked_rank,delta_vs_v4_anchor,delta_vs_v6_loo9,elapsed_min,error
+xendcg_reg_seed42,lgbm,rank_xendcg,1,42.0,,ok,143.0,635.0,0.4030722378293035,0.23441298441298442,0.6163306163306164,6.317388817388817,-0.0009377621706964656,-0.0058877621706964756,2.92,
+xendcg_reg_seed123,lgbm,rank_xendcg,1,123.0,,ok,143.0,582.0,0.4035514694417037,0.23766623766623768,0.6171171171171171,6.293793793793794,-0.0004585305582962551,-0.005408530558296265,2.76,
+xendcg_reg_seed456,lgbm,rank_xendcg,1,456.0,,ok,143.0,654.0,0.40225793694178463,0.23401973401973403,0.6164736164736164,6.331081081081081,-0.0017520630582153474,-0.006702063058215357,2.99,
+xendcg_reg_seed789,lgbm,rank_xendcg,1,789.0,,ok,143.0,528.0,0.4028112299457349,0.23430573430573431,0.6182968682968683,6.276991276991277,-0.0011987700542650526,-0.0061487700542650625,2.57,
+xendcg_reg_seed2024,lgbm,rank_xendcg,1,2024.0,,ok,143.0,602.0,0.40225782461066384,0.23527098527098528,0.6148648648648649,6.302266552266552,-0.0017521753893361414,-0.006702175389336151,2.98,
+xendcg_conservative,lgbm,rank_xendcg,1,,,ok,143.0,637.0,0.40413704482743373,0.23416273416273417,0.6183683683683684,6.255148005148005,0.00012704482743375323,-0.004822955172566257,2.47,
+xgb_rank_A,xgb,,2,,,failed:XGBoostError,,,,,,,,,,"[02:40:09] /__w/xgboost/xgboost/src/data/data.cc:1196: Check failed: valid: Input data contains `inf` or a value too large, while `missing` is not set to `inf`
+Stack trace:
+  [bt] (0) /home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/.venv/lib/python3.12/site-packages/xgboost/lib/l"
+xgb_rank_B_regularized,xgb,,2,,,failed:XGBoostError,,,,,,,,,,"[02:40:13] /__w/xgboost/xgboost/src/data/data.cc:1196: Check failed: valid: Input data contains `inf` or a value too large, while `missing` is not set to `inf`
+Stack trace:
+  [bt] (0) /home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/.venv/lib/python3.12/site-packages/xgboost/lib/l"
+xgb_rank_C_shallow,xgb,,2,,,failed:XGBoostError,,,,,,,,,,"[02:40:17] /__w/xgboost/xgboost/src/data/data.cc:1196: Check failed: valid: Input data contains `inf` or a value too large, while `missing` is not set to `inf`
+Stack trace:
+  [bt] (0) /home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/.venv/lib/python3.12/site-packages/xgboost/lib/l"
+cb_rank_A,catboost,,3,,,ok,143.0,1541.0,0.40451282988858633,0.2372014872014872,0.6167238667238667,6.237308737308737,0.0005028298885863536,-0.004447170111413656,17.97,
+cb_rank_B_regularized,catboost,,3,,,ok,143.0,1974.0,0.39925902170905664,0.22812097812097812,0.612934362934363,6.311275561275561,-0.004750978290943342,-0.009700978290943352,6.56,
+cb_rank_C_deeper,catboost,,3,,,ok,143.0,1989.0,0.4057782676886069,0.23863148863148864,0.6195838695838696,6.218396968396968,0.0017682676886069393,-0.0031817323113930707,22.95,
+xgb_booking_clf,xgb_binary,,4,,,failed:XGBoostError,,,,,,,,,,"[03:27:49] /__w/xgboost/xgboost/src/data/data.cc:1196: Check failed: valid: Input data contains `inf` or a value too large, while `missing` is not set to `inf`
+Stack trace:
+  [bt] (0) /home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/.venv/lib/python3.12/site-packages/xgboost/lib/l"
+xgb_click_clf,xgb_binary,,4,,,failed:XGBoostError,,,,,,,,,,"[03:27:53] /__w/xgboost/xgboost/src/data/data.cc:1196: Check failed: valid: Input data contains `inf` or a value too large, while `missing` is not set to `inf`
+Stack trace:
+  [bt] (0) /home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/.venv/lib/python3.12/site-packages/xgboost/lib/l"
+cb_booking_clf,catboost_binary,,4,,,ok,143.0,485.0,0.3890685178771868,0.22093522093522094,0.6013156013156014,6.519019019019019,-0.014941482122813154,-0.019891482122813164,1.63,
+reg_bal15_seed42,lgbm,lambdarank,5,42.0,,ok,143.0,406.0,0.4052946414860961,0.23777348777348778,0.6182611182611183,6.254540254540254,0.0012846414860961386,-0.0036653585139038714,2.16,
+cp_reg_seed42,lgbm,lambdarank,5,42.0,CP,ok,144.0,417.0,0.4059670012322444,0.23705848705848706,0.61994136994137,6.231695981695982,0.001957001232244404,-0.002992998767755606,2.23,
+ds_reg_seed42,lgbm,lambdarank,5,42.0,DS,ok,144.0,431.0,0.4050943175729904,0.23791648791648792,0.618082368082368,6.233161733161733,0.0010843175729904342,-0.0038656824270095758,2.31,
+reg_bal15_seed123,lgbm,lambdarank,5,123.0,,ok,143.0,635.0,0.4073566664059586,0.23963248963248962,0.6227656227656228,6.241527241527241,0.003346666405958598,-0.0016033335940414117,2.99,
+cp_reg_seed123,lgbm,lambdarank,5,123.0,CP,ok,144.0,486.0,0.40622339800418933,0.2388817388817389,0.6207993707993708,6.244101244101244,0.0022133980041893486,-0.0027366019958106613,2.47,
+ds_reg_seed123,lgbm,lambdarank,5,123.0,DS,ok,144.0,653.0,0.40651166572085906,0.23948948948948948,0.6204061204061204,6.229086229086229,0.002501665720859081,-0.002448334279140929,3.07,
+reg_bal15_seed456,lgbm,lambdarank,5,456.0,,ok,143.0,443.0,0.40620501199862086,0.2382024882024882,0.6216216216216216,6.241562991562992,0.002195011998620877,-0.002754988001379133,2.29,
+cp_reg_seed456,lgbm,lambdarank,5,456.0,CP,ok,144.0,520.0,0.4064694457967165,0.23802373802373802,0.6212641212641212,6.221578721578721,0.0024594457967165306,-0.0024905542032834793,2.6,
+ds_reg_seed456,lgbm,lambdarank,5,456.0,DS,ok,144.0,586.0,0.4070659848522043,0.23920348920348922,0.6215858715858716,6.2188974688974685,0.0030559848522043187,-0.0018940151477956912,2.86,

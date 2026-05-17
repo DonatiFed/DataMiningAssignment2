@@ -1,0 +1,4 @@
+status,name,path,ndcg5
+skipped_struct_dep,best_overall,,
+skipped_struct_dep,best_diverse,,
+ok,best_conservative,/home/ubuntu/DataMiningTechniques/Assignment2/DataMiningAssignment2/submissions/submission_overnight_best_conservative_20260517_022323.csv,0.4094316577990279

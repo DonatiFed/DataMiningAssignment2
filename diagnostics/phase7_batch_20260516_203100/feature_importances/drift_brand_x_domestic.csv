@@ -1,0 +1,2 @@
+feature,train_mean,val_mean,train_std,val_std,train_null_rate,val_null_rate,abs_mean_delta_over_train_std,high_drift,high_null_drift,train_min,train_max,val_min,val_max
+brand_x_domestic,0.45908545117271465,0.4688073694582892,0.4983231879957621,0.499026071262703,0.0,0.0,0.01950926330491715,False,False,0.0,1.0,0.0,1.0

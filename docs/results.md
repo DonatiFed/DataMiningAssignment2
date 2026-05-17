@@ -1,19 +1,25 @@
 # Results timeline
 
 Detailed per-experiment NDCG@5 scores. See `CHANGELOG.md` for the
-high-level narrative.
+version-by-version narrative and `final_kaggle_results.md` for the
+authoritative scoreboard.
 
-## Kaggle public leaderboard
+## Kaggle public leaderboard (final)
 
 | version | submission file | Kaggle public NDCG@5 | Δ vs V4 |
 |---|---|---:|---:|
-| V4 ensemble | `submissions/submission_v4_20260515_151132.csv` | **0.42021** | — |
-| V5 ensemble | `submissions/submission_v5_ensemble_20260516_094741.csv` | 0.41943 | −0.00078 |
-| V5.2 ablation | `submissions/submission_v5_te_ablation_20260516_103823.csv` | (pending) | — |
+| **V4 ensemble** ★ | `submissions/submission_v4_20260515_151132.csv` | **0.42021** | — |
+| V9 overnight | `submissions/submission_overnight_best_deployable_20260517_095946.csv` | 0.42012 | −0.00009 |
 | V6 LOO-9 | `submissions/submission_v6_loo9_20260516_184304.csv` | 0.42004 | −0.00017 |
-| Phase 2 (v4.2) | `submissions/submission_phase2_best_20260515_225726.csv` | 0.41639 | −0.00382 |
+| V11 MEGA-BAG | `submissions/submission_FINAL_megabag_25equal_*.csv` | 0.42003 | −0.00018 |
+| V11 SAFE-PUSH | `submissions/submission_FINAL_safepush_v75_6div_*.csv` | 0.41995 | −0.00026 |
+| V5 ensemble | `submissions/submission_v5_ensemble_20260516_094741.csv` | 0.41943 | −0.00078 |
+| V10 adversarial reweight | `submissions/submission_adv_reweight_20260517_111219.csv` | 0.41903 | −0.00118 |
+| V4.2 (Phase 2 best) | `submissions/submission_phase2_best_20260515_225726.csv` | 0.41639 | −0.00382 |
 
-Top of leaderboard at time of writing: ~0.46. Gap from V4: ~0.04.
+★ = selected as one of two final submissions for the Kaggle private
+leaderboard. Top of the public leaderboard at submission time:
+approximately 0.46. Gap from V4: +0.04.
 
 ## V6 — single-member NDCG@5 on temporal val
 

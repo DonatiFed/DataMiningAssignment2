@@ -1,0 +1,12 @@
+best_ensemble_rank,best_ensemble_id,dropped,ndcg5,delta_vs_best
+1,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+cb_rank_A+xendcg_reg_seed42@0.075each,cb_rank_C_deeper,0.40967700357666226,-0.00011462461009509317
+1,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+cb_rank_A+xendcg_reg_seed42@0.075each,struct_rank_xendcg_regularized,0.40967098691921433,-0.00012064126754302018
+1,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+cb_rank_A+xendcg_reg_seed42@0.075each,cb_rank_A,0.4097186295589439,-7.299862781345867e-05
+1,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+cb_rank_A+xendcg_reg_seed42@0.075each,xendcg_reg_seed42,0.40913120669561215,-0.0006604214911452022
+2,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+xendcg_reg_seed42@0.075each,cb_rank_C_deeper,0.409301394399306,-0.0004172351596378743
+2,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+xendcg_reg_seed42@0.075each,struct_rank_xendcg_regularized,0.4094880493933958,-0.000230580165548111
+2,v6+pool_cb_rank_C_deeper+struct_rank_xendcg_regularized+xendcg_reg_seed42@0.075each,xendcg_reg_seed42,0.40936458151966143,-0.00035404803928246187
+3,v6+pool_cb_rank_C_deeper+xendcg_conservative+cb_rank_A+xendcg_reg_seed42@0.05each,cb_rank_C_deeper,0.40958997416218634,-0.00011807107751238277
+3,v6+pool_cb_rank_C_deeper+xendcg_conservative+cb_rank_A+xendcg_reg_seed42@0.05each,xendcg_conservative,0.40955973531458933,-0.00014830992510939112
+3,v6+pool_cb_rank_C_deeper+xendcg_conservative+cb_rank_A+xendcg_reg_seed42@0.05each,cb_rank_A,0.40961709973166405,-9.094550803467882e-05
+3,v6+pool_cb_rank_C_deeper+xendcg_conservative+cb_rank_A+xendcg_reg_seed42@0.05each,xendcg_reg_seed42,0.40937354059359804,-0.0003345046461006862

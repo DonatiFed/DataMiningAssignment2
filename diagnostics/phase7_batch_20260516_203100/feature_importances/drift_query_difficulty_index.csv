@@ -1,0 +1,2 @@
+feature,train_mean,val_mean,train_std,val_std,train_null_rate,val_null_rate,abs_mean_delta_over_train_std,high_drift,high_null_drift,train_min,train_max,val_min,val_max
+query_difficulty_index,3.1892107799035094,3.176878267204497,0.3228101664010366,0.3326714978908461,0.0,0.0,0.03820360689524604,False,False,1.4888919591903687,3.4971747398376465,1.4954801797866821,3.5247786045074463

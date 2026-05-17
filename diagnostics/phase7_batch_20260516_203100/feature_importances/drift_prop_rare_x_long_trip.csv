@@ -1,0 +1,2 @@
+feature,train_mean,val_mean,train_std,val_std,train_null_rate,val_null_rate,abs_mean_delta_over_train_std,high_drift,high_null_drift,train_min,train_max,val_min,val_max
+prop_rare_x_long_trip,inf,inf,,,0.0,0.0,,False,False,0.09393500536680222,inf,0.0912892147898674,inf

@@ -1,0 +1,2 @@
+feature,train_mean,val_mean,train_std,val_std,train_null_rate,val_null_rate,abs_mean_delta_over_train_std,high_drift,high_null_drift,train_min,train_max,val_min,val_max
+is_long_window_x_top_quartile_price,0.09827742893976667,0.09066572081593936,0.2976893950088847,0.28713315358012126,0.0,0.0,0.025569295552414825,False,False,0.0,1.0,0.0,1.0

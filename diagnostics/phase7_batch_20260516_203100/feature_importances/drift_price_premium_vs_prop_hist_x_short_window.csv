@@ -1,0 +1,3 @@
+feature,train_mean,val_mean,train_std,val_std,train_null_rate,val_null_rate,abs_mean_delta_over_train_std,high_drift,high_null_drift,train_min,train_max,val_min,val_max
+price_premium_vs_prop_hist_x_short_window,5.849518362219033,8.137468100629112,16.903383462180184,19.8162867929551,0.0,0.0,0.135354542688393,False,False,0.0,306.40936279296875,0.0,306.40936279296875
+is_price_premium_x_short_window,0.22846635422416714,0.3293012016665508,0.41984458935620994,0.4699594878790261,0.0,0.0,0.24017183976757622,True,False,0.0,1.0,0.0,1.0

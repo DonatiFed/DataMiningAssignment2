@@ -1,0 +1,3 @@
+combo_id,status,added_features,n_features,best_iter,ndcg5,recall1,recall5,mean_booked_rank,delta_vs_v4_anchor,delta_vs_v6_loo9,elapsed_min
+combo_brand_dom_x_query_diff,ok,"brand_x_domestic,query_difficulty_index",145,464,0.4042869413667166,0.23623623623623624,0.6184398684398684,6.265301015301016,0.00027694136671663205,-0.004673058633283378,3.33
+combo_long_window_price_x_rare_long_trip,ok,"is_long_window_x_top_quartile_price,prop_rare_x_long_trip",145,407,0.4041713093461164,0.23641498641498643,0.6182253682253682,6.282246532246532,0.00016130934611641168,-0.004788690653883598,3.05

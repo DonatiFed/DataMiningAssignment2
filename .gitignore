@@ -1,6 +1,8 @@
 data/
 models/
-submissions/
+submissions/*
+!submissions/README.md
+!submissions/*_README.md
 logs/
 __pycache__/
 *.pyc
@@ -23,3 +25,18 @@ artifacts/**/model_*.txt
 *.lgb
 *.cbm
 *.xgb
+
+# XGBoost saves models as .json — exclude when located in models/ subdirs only
+diagnostics/**/models/**/*.json
+artifacts/**/models/**/*.json
+
+# But explicitly re-include diagnostic and submission READMEs that the
+# patterns above would otherwise exclude (e.g. diagnostics/<run>/README.md).
+!diagnostics/**/README.md
+!diagnostics/**/*.md
+
+# Per-row predictions (val/test) — multi-MB each, dozens per run.
+*.npy
+
+# Large diagnostic dumps (per-query disagreement files etc.)
+diagnostics/**/v4_v5_disagreement*.csv

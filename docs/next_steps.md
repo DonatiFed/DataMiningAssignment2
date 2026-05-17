@@ -1,120 +1,159 @@
-# Next steps
+# Next steps — what would be tried with a longer timeline
 
-_Last updated: 2026-05-16, post-V6._
+This document describes ideas that were not attempted within the project
+timeline, ordered by expected impact. It is intended for a hypothetical
+continuation of the work, or as a guide for similar projects.
 
-V6 Kaggle = **0.42004** (vs V4 0.42021, essentially flat). Local +0.00217
-did not translate. Top leaderboard ~0.46 → gap ~0.04. Feature engineering
-on the existing pipeline has hit a ceiling (see `CHANGELOG.md` and
-`docs/results.md` for the proof).
+## State at project end
 
-This file is the forward queue. Read `CHANGELOG.md` and `docs/results.md`
-first for context.
+- Best Kaggle public NDCG@5: **0.42021** (V4 ensemble).
+- Top of public leaderboard: approximately 0.46. Gap from our best: +0.04.
+- Validation strategy: temporal split (cutoff 2013-05-21).
+- Most useful diagnostic: adversarial validation (AUC = 1.0) confirmed
+  that train and test distributions are radically different, primarily
+  in cross-key target-encoding features.
 
----
+The remainder of this document discusses what would be tried next if the
+work continued.
 
-## What's NOT worth doing next
+## What is NOT worth pursuing
 
-These have been ruled out by data, not speculation:
+These have been ruled out by direct experimental evidence:
 
-- **More in-model feature stacking on V4_ANCHOR config.** Three combinations
-  of two positive features were all anti-additive (`docs/results.md`).
-  The bottleneck is GBDT split selection with high feature correlation
-  at this dataset size.
-- **More single-key TE variants.** Of `prop_click_rate_pos_adj_s40_oof`,
-  `prop_book_rate_pos_adj_s40_oof`, `prop_rel_rate_pos_adj_s40_oof`, only
-  the click version improved (+0.00132 local). Book/rel were noise.
-- **`booking_clf` as an ensemble member.** Confirmed by LOO to actively hurt.
-- **Cross-key TEs without drift control.** V5 had adversarial AUC = 1.0;
-  V5.2 ablation dropped the worst offenders. Any new cross-key TE must
-  pass an adversarial-AUC check (`scripts/diagnose_v5_gap.py` pattern).
+- **More in-model feature stacking** on the V4_ANCHOR configuration.
+  Three combinations of two positive features were anti-additive (see
+  `lessons_learned.md` §5).
+- **Sample-importance reweighting (adversarial domain adaptation).** V10
+  attempted this and lost −0.00118 on Kaggle. The drift is in features
+  the model must use; penalizing them hurts generalization.
+- **More cross-key target encodings.** V5's cross-key TEs had
+  adversarial AUC = 1.0 — they are the drift problem, not a solution.
+- **Single-feature additions to V6 LOO-9 as ensemble members.** Their
+  individual NDCG@5 (around 0.404) is too far below V6's ensemble level
+  (0.409). Any positive weight dilutes V6 more than it adds.
 
----
+## Promising directions
 
-## Top candidates, ranked by expected leverage × confidence
+In order of expected leverage × confidence:
 
-### 1. Hard-negative mining / failure-driven features
+### 1. Neural network listwise model (NEW model class)
 
-Train V6, predict on val, identify the `prop_id`s the model consistently
-mis-ranks (e.g. predicted top-5 but actual relevance = 0, with high
-frequency). Encode those signals as features for the next iteration:
+PyTorch implementation of ListNet (cross-entropy listwise loss) or
+approximate-NDCG loss. Architecture: a 3-layer MLP (512 → 256 → 1) with
+softmax over the candidates within each search query.
 
-- "How often was this prop_id a hard negative in past queries?"
-- "How often did this prop_id displace the actual booked hotel?"
+**Why this should help:**
+- Different model class from V6's nine LambdaRank members and the V9
+  CatBoost rankers.
+- Different inductive bias may capture ranking signal that GBDT misses.
+- In Kaggle Expedia 2013 post-mortems, several top teams used either
+  RankNet/ListNet or stacked GBDT + NN.
 
-This is *failure-driven*: the feature targets exactly the rows the model
-is currently getting wrong. Mechanic similar to boosting but at the
-feature-engineering layer. Expected local gain: +0.002 to +0.005 if the
-mis-rank pattern is consistent.
+**Estimated cost:** 4–6 hours implementation + 1–2 hours training on
+CPU. Estimated Kaggle lift as an ensemble member: +0.002 to +0.005.
 
-Sketch: produce a per-`prop_id` "mis-rank frequency" feature from V6
-predictions on temporal_val. Verify drift on temporal_val before testing
-on Kaggle.
+**Risk:** medium. NN training on tabular data is historically more
+fragile than GBDT; getting a working baseline that beats V6 LOO-9 on
+local can take several iterations.
 
-### 2. Adversarial sample reweighting
+### 2. Two-stage propensity model
 
-V5's adversarial AUC was 1.0 — a simple classifier could perfectly tell
-train vs test apart. V6 had cleaner features but local→Kaggle gap was
-still wider than the temporal proxy suggested.
+Train a base model on `random_bool = 1` rows only (rows displayed in
+random order, so the relevance signal is unbiased by Expedia's prior
+ranking). Then fine-tune on the full training set, using the base
+model's predictions as a regularization signal (e.g., as a feature, or
+via distillation).
 
-Train an adversarial classifier (train vs test, on shared columns).
-Weight each train row by `P(row is test) / (1 - P(row is test))`.
-Retrain V6 with these weights. Local NDCG@5 may *drop*, but Kaggle
-should improve.
+**Why this should help:**
+- The base model learns from truly unbiased data, so it cannot pick up
+  the position-bias-induced shortcuts that even IPW cannot fully remove.
+- The fine-tuning step lets the model use the full data while the base
+  model anchors it to unbiased predictions.
 
-Expected gain: +0.003 to +0.008 Kaggle. Cheap (one classifier + one retrain).
+**Estimated cost:** 6–8 hours implementation + training. Estimated
+Kaggle lift: +0.003 to +0.008 if the train→test drift is partially
+position-bias-induced.
 
-### 3. Heterogeneous base learners in the ensemble
+**Risk:** medium-high. Implementation complexity is higher than NN
+listwise.
 
-V6's 9 members are all LightGBM with slight config variations. Adding
-genuine model-class diversity may help more than another LGBM variant:
+### 3. Hard-negative mining as features
 
-- XGBoost rank (`xgboost.train` with `rank:pairwise`)
-- CatBoost with `YetiRank`
-- A small NN listwise ranker (e.g. ListNet)
+Train V6, predict on val, identify property IDs that V6 consistently
+mis-ranks (e.g., predicted top-3 but actual relevance = 0, occurring in
+> N% of past queries with high price/star/etc). Encode these signals as
+new features for the next training cycle.
 
-Each becomes a separate ensemble member; combine via the existing
-rank-average mechanic in `pipelines/v6_submit.py`. Expected gain:
-+0.003 to +0.010 Kaggle.
+**Why this should help:**
+- The features are derived from V6's specific failure modes, so they
+  add information V6 doesn't already have.
+- Unlike the failure-pattern features in V7 (which were aggregate
+  hypotheses about WHAT V6 mis-ranks), this approach uses V6's actual
+  errors as labels.
 
-### 4. Loss-side position-bias handling
+**Estimated cost:** 3–4 hours for the feature derivation + 1 hour for
+retraining. Estimated Kaggle lift: +0.002 to +0.005 if the mis-rank
+patterns are consistent.
 
-Current pipeline uses IPW as a sample weight. Alternatives:
+**Risk:** medium. Could overfit to V6's specific mistakes if the new
+features don't generalize.
 
-- **Propensity-weighted LambdaRank**: scale per-pair losses by inverse
-  propensity, not per-row.
-- **Two-stage**: train V0 on random_bool=1 only (truly unbiased); then
-  fine-tune on full data using V0 as a regulariser.
+### 4. Heterogeneous base learners + seed bagging
 
-Higher engineering cost (custom LightGBM objective or two trainings).
-Expected gain: +0.005 to +0.015 if executed well, but risky.
+Add more diversifier seeds and frameworks: 10 seeds of
+`rank_xendcg_regularized`, 10 seeds of CatBoost YetiRank, all bagged
+with strong stochasticity (`feature_fraction = 0.6`, `bagging_fraction
+= 0.7`, different `bagging_freq`). Rank-average all seeds within each
+framework, then ensemble.
+
+**Why this should help:**
+- Seed bagging is the most reliable variance-reduction technique for
+  tabular GBDT.
+- Combined with the framework diversity (LightGBM rank_xendcg +
+  CatBoost YetiRank), the resulting bag is genuinely independent of
+  V6's LambdaRank backbone.
+
+**Estimated cost:** 6–10 hours of training time across the seeds.
+Estimated Kaggle lift: +0.001 to +0.003.
+
+**Risk:** low. Even if the lift is small, the cost is mostly compute
+time, not engineering.
 
 ### 5. Robust temporal validation
 
-The local→Kaggle correlation is still weak with temporal val. Possible
-improvements:
+The current local→Kaggle gap (+0.011) is large and noisy. A more
+reliable local proxy would reduce wasted Kaggle submissions.
 
+Possible improvements:
 - Multi-seed temporal: split by `srch_id` randomly within the
-  post-cutoff window, take the multi-seed mean.
-- Time-block cross-validation: roll the cutoff forward in monthly steps,
-  use the mean as the local proxy.
-- Adversarial-weighted val: weight val rows by their `P(test)` estimate.
+  post-cutoff window, take the multi-seed mean local NDCG@5.
+- Time-block cross-validation: roll the cutoff forward in monthly
+  steps, use the mean across folds.
+- Adversarial-weighted val: weight val rows by their estimated
+  `P(test|x)` to emphasize test-like rows.
 
-This won't *improve* Kaggle directly; it gives a more reliable selection
-signal so we stop wasting runs on features that overfit local.
+**Why this should help:**
+- A more reliable local metric is not a direct Kaggle improvement,
+  but it makes every other experiment more efficient.
 
----
+**Estimated cost:** 2–3 hours implementation. No direct Kaggle gain;
+this is infrastructure.
 
-## Operational invariants (carry forward)
+## Operational invariants to preserve
 
-- **Temporal split is the validation contract.** Anchor: V4_ANCHOR
-  temporal NDCG@5 = 0.40401. Reference: `pipelines/temporal_validation.py`.
-- **No `lgb.Dataset.construct()`** outside the per-config loop. See
-  `docs/architecture.md` §V4 anchor invariant.
-- **Submission CSV header is `srch_id,prop_id`** lowercase. Verified in
-  `pipelines/v6.py` and `pipelines/v6_submit.py`.
-- **CP and DS are separate ensemble members.** Never combined inside a
-  single model (proven anti-additive in V6).
-- **Any new TE feature requires an adversarial-AUC check** on the
-  generated feature distribution between train and Kaggle test (proxy: val).
-- **Sub-anchor members must pass LOO** before joining an ensemble.
-  Solo NDCG < anchor is NOT a disqualifier; harmful LOO contribution IS.
+If continuing this work, the following invariants should be carried
+forward:
+
+- **Temporal split** as the primary validation contract. Random split
+  proved misleading.
+- **No `lgb.Dataset.construct()`** outside the per-configuration loop
+  (see `docs/architecture.md` §V4 anchor invariant).
+- **Kaggle submission CSV header must be `srch_id,prop_id`** lowercase.
+- **CP and DS as separate ensemble members.** In-model feature stacking
+  is consistently anti-additive at this dataset size and feature count.
+- **Adversarial AUC check** on every new target-encoding feature
+  before adoption. If train→test AUC > 0.7 for that feature alone, it
+  is a drift candidate and likely to fail on Kaggle.
+- **Sub-anchor models must pass LOO** before joining an ensemble. A
+  solo NDCG below V4_ANCHOR does NOT disqualify a model; a harmful LOO
+  contribution does.
