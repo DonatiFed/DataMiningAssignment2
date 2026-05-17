@@ -17,7 +17,7 @@
   <a href="#results">Results</a> &middot;
   <a href="docs/journey.md">Journey</a> &middot;
   <a href="docs/architecture.md">Architecture</a> &middot;
-  <a href="docs/lessons_learned.md">Lessons</a> &middot;
+  <a href="docs/lessons_learned.md">Insights</a> &middot;
   <a href="docs/final_kaggle_results.md">Kaggle Scoreboard</a>
 </p>
 
