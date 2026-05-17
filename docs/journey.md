@@ -5,7 +5,7 @@ Kaggle Expedia Personalized Hotel Search dataset (NDCG@5 metric). Each
 labeled version (V3 → V11) is a coherent modelling cycle with its own
 validation strategy, conclusions, and follow-up.
 
-## Reading guide for non-specialists
+## Reading guide 
 
 A few terms used throughout this document:
 
